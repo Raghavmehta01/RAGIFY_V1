@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>RAG Search Engine</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="container">
+    <h1>🔎 RAG Search Engine</h1>
+
+    <form id="ask-form" method="post">
+      <label for="question" class="sr-only">Your Question</label>
+      <div class="input-wrap">
+        <span class="pill">Your Question</span>
+        <textarea id="question" name="question" rows="2" placeholder="Ask about your documents..." required minlength="3"></textarea>
+      </div>
+      <div class="buttons">
+        <button type="submit" id="submit">Submit</button>
+        <button type="button" id="clear">Clear</button>
+      </div>
+    </form>
+
+    <section class="examples">
+      <span>Examples</span>
+      <button class="chip">What are feature stores?</button>
+      <button class="chip">How do companies handle big data?</button>
+      <button class="chip">Explain Python decorators</button>
+    </section>
+
+    <section id="result" aria-live="polite"></section>
+  </main>
+  <script src="app.js"></script>
+</body>
+</html>
