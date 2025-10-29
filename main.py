@@ -1,3 +1,6 @@
+# export OLLAMA_MODEL=mistral:7b && python3 main.py
+
+
 import os, time, json, requests
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 
@@ -27,7 +30,16 @@ def wait_for_ollama(base=OLLAMA_BASE, timeout=60):
 wait_for_ollama()
 
 loader = WebBaseLoader(
-    web_paths=("https://orangedatatech.com/team/",),
+    web_paths=( "https://orangedatatech.com/team/",
+                "https://en.wikipedia.org/wiki/Ministry_of_Defence_(India)",
+                "https://en.wikipedia.org/wiki/Indian_Armed_Forces",
+                "https://en.wikipedia.org/wiki/Indian_Army",
+                "https://en.wikipedia.org/wiki/Indian_Navy",
+                "https://en.wikipedia.org/wiki/Indian_Air_Force",
+                
+               
+               
+               ),
     raise_for_status=False, continue_on_failure=True, trust_env=True,
 )
 loader.requests_kwargs = {"headers": {"User-Agent": UA}}
@@ -60,6 +72,7 @@ if CHUNKING_STRATEGY == "semantic" and HAS_SEMANTIC:
         buffer_size=64,
     )
     splits = text_splitter.split_documents(docs)
+    
 
 elif CHUNKING_STRATEGY == "markdown":
     headers_to_split_on = [("#","h1"),("##","h2"),("###","h3"),("####","h4")]
