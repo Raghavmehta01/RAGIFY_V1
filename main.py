@@ -31,11 +31,8 @@ wait_for_ollama()
 
 loader = WebBaseLoader(
     web_paths=( "https://orangedatatech.com/team/",
-                "https://en.wikipedia.org/wiki/Ministry_of_Defence_(India)",
-                "https://en.wikipedia.org/wiki/Indian_Armed_Forces",
-                "https://en.wikipedia.org/wiki/Indian_Army",
-                "https://en.wikipedia.org/wiki/Indian_Navy",
-                "https://en.wikipedia.org/wiki/Indian_Air_Force",
+                "https://www.w3schools.com/python/default.asp",
+                "https://www.python.org/doc/",
                 
                
                
