@@ -3,12 +3,15 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>RAG Search Engine</title>
+  <title>Ragify Chatbot - Document Q&A</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
   <main class="container">
-    <h1>🔎 RAG Search Engine</h1>
+    <div class="page-header">
+      <a href="/" class="back-link">← Back to Home</a>
+      <h1>🔎 Ragify Chatbot</h1>
+    </div>
 
     <form id="ask-form" method="post">
       <label for="question" class="sr-only">Your Question</label>
@@ -38,6 +41,18 @@
     </section>
 
     <section id="result" aria-live="polite"></section>
+
+    <section id="file-upload-section" class="url-section">
+      <h3>📄 Upload Documents</h3>
+      <p class="url-hint">Add PDF or Word documents to the knowledge base:</p>
+      <form id="file-form">
+        <div class="file-input-wrap">
+          <input type="file" id="file-input" accept=".pdf,.doc,.docx,.txt" required />
+          <button type="submit" id="upload-file-btn">Upload File</button>
+        </div>
+      </form>
+      <div id="file-status"></div>
+    </section>
 
     <section id="url-input-section" style="display: none;" class="url-section">
       <h3>📎 Add Website to Knowledge Base</h3>

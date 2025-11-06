@@ -1,0 +1,810 @@
+Requirements Kickoff Meeting-20250818_190810Meeting Recording
+18 August 2025, 01:38pm 54m 58s
+Lovleet Jain started transcription
+Angela Watts   0:09 Yeah.
+Susan Primrose   0:10
+All right. How would you like us to start? Start.
+Lovleet Jain   0:15
+So just the you know the applications flow in terms of #1. So today team did some some Onboarding I think. Did you guys try some Onboarding you were saying that you were trying to add in?
+You did. OK, you attempted, but you could not or we did not. Oh, OK, sorry, they were. So yeah, maybe we can start with a quick company onboarding. Company Onboarding maybe a stretch for today's call because that I'm assuming is more like an admin stuff.
+But um, definitely the the employee setup or employee Onboarding how it is done.
+Susan Primrose   1:03
+So the way that the clients and the employees come over here is through the data feed. They don't actually onboard at this product. The only thing the employee can do is create a login for themselves to view the data. The managers have to be invited to be a manager.
+Lovleet Jain   1:21 OK.
+I see. And when you say manager needs to be invited, is it more like an e-mail?
+Susan Primrose   1:32
+It is. It is.
+Louann Sheppard   1:33 Yes.
+Lovleet Jain   1:35 OK.
+So the system sends out the e-mail to them.
+Angela Watts   1:37 OK.
+Susan Primrose   1:43 Yes.
+Lovleet Jain   1:44
+OK. And is that also something which happens from the back end?
+Susan Primrose   1:48
+It happens from the administration tools. So as an administrator you have the option to create managers logins and invite them to be part of it. And you define what clients they'll have access to.
+Lovleet Jain   2:06 OK.
+Susan Primrose   2:07 If it's one or many.
+Lovleet Jain   2:11
+Makes sense. So in that case there is no.
+Angela Watts   2:14
+I.
+Lovleet Jain   2:17
+No uh employee or personnel to be added from from the front end.
+Susan Primrose   2:23
+Correct. The only way that we add personnel on the front end is to use click click boarding and go through the new hire process. Then they enter here 1st and then go to pay plus. That's the only. Uh, way they enter here first.
+Lovleet Jain   2:41
+Got it. And does it mean you said click boarding is also integrated with the system?
+Susan Primrose   2:51
+Yes, it's an API from from them to us and vice versa.
+Lovleet Jain   2:53 Is that right?
+Right.
+And is that something which is available out here?
+Susan Primrose   3:06
+Yes, so our API starts over here on this Onboarding section. Whoops, I see this is the thing I hate too, that you can't hover over anything. So in here hire managed candidates.
+Lovleet Jain   3:06 So.
+Yeah.
+Susan Primrose   3:23
+This is actually us getting ready to. This is still on 360 at this point, but when I want to hire somebody, I do hire candidate and then there's two pages to set up.
+Page one and page two. Page one are the mandatory requirements for the API for clipboarding.
+Lovleet Jain   3:41 OK.
+Susan Primrose   3:51
+And then page two are the optional amounts that the things that the client needs to do to pay them.
+Lovleet Jain   3:58 OK.
+Susan Primrose   3:58 So in here.
+We always have to use the word test because that's the only way they don't bill us for the last name.
+Lovleet Jain   4:06 Uh.
+Susan Primrose   4:09
+'Cause they don't bill us for um.
+Lovleet Jain   4:14
+So they they do the invoicing using the the the the couch.
+Susan Primrose   4:21
+Yes, this is a per employee per.
+Lovleet Jain   4:22 Of the employees, OK.
+Susan Primrose   4:27
+Per hire. So that's how we bill the clients and we get billed.
+Lovleet Jain   4:28 Got you. Click boarding, OK.
+But. OK.
+Louann Sheppard   4:41
+That's only for click. It's not for the general product. Lovely, right? OK.
+Lovleet Jain   4:43 Got it.
+Susan Primrose   4:43 Right.
+Lovleet Jain   4:45
+Right, right. And I also noticed this plus sign. Um, like Susan plus uh, this thing. 
+Um.
+Angela Watts   4:45 Yes.
+Now.
+Susan Primrose   4:58
+So that's a trick that you can do with Gmail. So my Gmail account, yeah, it's Susan Primrose.
+Lovleet Jain   4:58
+How?
+Uh-huh. Yes, you can create as many. Yeah, yeah.
+Laurie Dimattei   5:04
+I think they just broke it on role management because I've tried to the super admin user. I did my Gmail with the plus and when you look at invites, it's now removing the plus and putting a space there and I didn't get the invite.
+Louann Sheppard   5:19 OK.
+They probably are taking away special characters in the program because they had so many issues with people using Spanish keyboards, so they strip out special characters.
+Lovleet Jain   5:37
+Right. Yeah, Gmail usually does that, so.
+Susan Primrose   5:37
+Well, they need to leave some of them.
+Louann Sheppard   5:40
+I know, but you know infinite wisdom, what it is.
+Lovleet Jain   5:41 Yeah.
+Susan Primrose   5:46 Oh my God.
+Lovleet Jain   5:53
+So location I understood what is the package.
+Susan Primrose   5:56
+The package is the group of forms. So Louanne creates in in clipboarding a group of packages and a package would be like the info form, their direct deposit, their.
+Lovleet Jain   6:01
+Mhm.
+Susan Primrose   6:13
+Tax forms and an I9, maybe a handbook. So you could she bundles together the forms that she wants in each package and each package can be different. The client can have multiple packages. So that is all. This is actually what she called the mover and click boarding.
+So we're still on 360 at this point. We have not reached out to click boarding yet.
+Lovleet Jain   6:40 No, OK.
+Susan Primrose   6:41
+Except that the packages are appearing here from the API.
+Lovleet Jain   6:49 Sure.
+Susan Primrose   6:53
+And then page two, these are things we need to be able to hire them. It's the minimal requirements.
+Lovleet Jain   7:02
+Mhm.
+Susan Primrose   7:19
+Benefit classes needed. If they're going to do our benefit enrollment, we have an integration with Cbiz for Employee Navigator.
+Lovleet Jain   7:41
+You get this in the screen. You've seen the screen, right? Mm-hmm. Yeah.
+No.
+Why don't?
+Susan Primrose   7:54
+Anything with an asterisk is mandatory. Other things are not.
+Lovleet Jain   8:00 Right.
+I don't think so. Yeah.
+Susan Primrose   8:17
+And these are just our departments. And yes, they're funny. They're named weird. But yeah, then what'll happen is I will get an e-mail.
+Lovleet Jain   8:29
+Mm-hmm.
+Susan Primrose   8:30
+and Gmail. So at this point, as soon as I click that last button, it's the API sends the data over to click boarding and it produced a umm
+Lovleet Jain   8:43 Package.
+Susan Primrose   8:44
+A package for me. I don't have my stuff in there anymore, but now what'll happen is the employee is going to get an e-mail and a text of their package to enroll.
+Lovleet Jain   8:47 OK.
+OK.
+And when we say the package, this is all like physical package or soft package like e-mail.
+Susan Primrose   9:10
+No, it's it's gonna be it. I'll have to go and log into Gmail. Hold on. I'm trying to get rid of the toolbar is in my way. There we go.
+Lovleet Jain   9:21 Sure.
+Angela Watts   9:35
+And this is just the onboarding setup, like creating the employee information for the onboarding for new hires. It does not create their account for.
+Susan Primrose   9:49 Right.
+Angela Watts   9:50
+There for data access, you know, once they're actually hired.
+Lovleet Jain   9:56 I see. When does that?
+Louann Sheppard   9:58
+It would be nice if it. It would be nice if it did all together. Like, yeah, because it.
+Lovleet Jain   10:02 Uh.
+Angela Watts   10:05
+That's almost, as I said, that's on the top of my wish list, honestly to have all integrated within one product the ability to you because you're going to have, you know, we do have the administrative set up where we create client accounts.
+Lovleet Jain   10:14 Yes.
+Yeah.
+Angela Watts   10:21
+In 360, the top of my wish list is to also have a separate one where we can invite employees instead of them having to go and register. Maybe we can send them an invite or at the very least once they set theirs up, maintain.
+Susan Primrose   10:37 I don't think.
+Angela Watts   10:41
+So if they need their password reset or you different things like that, us be able to go in and or even give the client access, client managers access to be able to go in and reset their passwords or things like that all within the one product.
+Lovleet Jain   11:00 Sure.
+So basically sending an e-mail to the invite for creating the basic structure or adding the basic information themselves and then.
+You start the Onboarding that point onwards. Is that what you're indicating?
+Angela Watts   11:26
+Well, now like, yeah, if you're talking about the old, if you're when you say 
+Onboarding if you're referring to for new hires, yeah, that's yeah, that's what Susan's doing just driving it from sending them the invitation. You know there's they don't create anything themselves at that point. You know we have to go in and and.
+Lovleet Jain   11:32 New hires, yes.
+OK.
+Right.
+Angela Watts   11:46
+Add them as a new hire and begin the Onboarding process by sending them the e-mail invitation.
+Lovleet Jain   11:51
+Got it. So yeah, that's where I wanted to confirm what what did you mean. So basically there are two sites which we which you just mentioned one I understand you were talking about.
+Creating the company itself or creating the client in the system and 2nd is creating the user or the employee into the system, right?
+Angela Watts   12:21
+Yes, for existing employees, correct.
+Lovleet Jain   12:22 OK.
+For existing employees.
+Angela Watts   12:27
+Mhm.
+ 
+12:28
+What do you mean? I'm sorry, I'm missing something. So when?
+Angela Watts   12:32
+No, that's OK. Employees that are already working for the company that are not being new hires or onboarded employees that are already existing, they can currently go to the site and register themselves for an account.
+Lovleet Jain   12:39 Uh-huh. Uh huh.
+Susan Primrose   12:46 I'm sorry.
+Angela Watts   12:49
+But it would be kind of nice too if you know if they either as an alternative to them going and registering and creating an account to view their check stubs and things like that. If we could send them an invite, you know and like I said, that's not to me not as important as just.
+Basically being able to maintain them once they have their user accounts set up where we can help them as far as administrating password resets and things like that.
+Lovleet Jain   13:21
+Got it. So basically self managed user credentials or you know, password recovery and those kind of things, right?
+Angela Watts   13:27
+Mhm.
+Right.
+Lovleet Jain   13:31
+Understood. And when you say, uh, existing employee.
+Being added to 360 is is that what you were mentioning? OK, so you mean the employee can exist in the back end and then there is one more round where they are, they are added to the 360 system.
+Angela Watts   13:40
+Mhm.
+Lovleet Jain   13:54
+These are two different activities. These are two separate activities.
+Angela Watts   13:58
+Well, their data's already get already in. If they're already an employee in the back end, then their data is already available in 360. They just have to go to the website and create their user account.
+Lovleet Jain   14:04
+Mm-hmm.
+OK.
+Angela Watts   14:14
+You know, they just have to Click to create their user account and you know, put in their contact information and then link their credentials like their date of birth, whatever we have set up as their validation credentials to allow them to view their own data. But they actually do just go to.
+To the website and they created sign up for an account. They create their account there to be able to access their data.
+Laurie Dimattei   14:45
+And that's one of the things I don't like about you can the existing one when they're creating users. You don't have to enter in your validation credentials initially when you're creating your account. So you can end up with accounts where they've just created the e-mail, but they haven't put in. Their validation credentials, so it's not connected to their data.
+Lovleet Jain   15:10
+Mm-hmm.
+Laurie Dimattei   15:14
+They shouldn't get the validation e-mail to confirm that their e-mail address is correct that they've entered because the validation information is there's last four of their social, first four of their last name, last four of their social, and their date of birth. So any.
+Employee that's setting up for their account.
+Would be aware of their own credentials. There's no reason for them not to do that and end up with accounts where they could log in, but they can't see anything because it's not connected to anything.
+Lovleet Jain   15:40
+Hmm.
+OK.
+Angela Watts   15:54
+Another question too, and I don't think we've actually even talked about it behind the scenes. Do we want to keep it where it has to be an e-mail address login or, you know, allow them to have usernames other than their e-mail address?
+16:14
+So I'm assuming one of the based on one of the previous conversations that we'll be moving towards Microsoft authentication method. If that is the case, I'm gonna assume that we'll you know.
+Angela Watts   16:23 Oh.
+Lovleet Jain   16:28
+We'll do it based on the e-mail, but that said, I think we can also keep like mobile numbers as backup plans. So if they don't have access to the e-mail ID for whatever reason, they should be able to use their mobile numbers or you know.
+Angela Watts   16:32
+Mhm.
+Lovleet Jain   16:48
+Few other mechanism, for example that security code which gets which changes every 30 seconds and you know there are three or four different methods. Uh combination of those methods we we can use.
+Angela Watts   16:48
+Mhm.
+Mhm.
+Lovleet Jain   17:07
+Did I answer your question?
+Angela Watts   17:09 Yes.
+Lovleet Jain   17:11 Perfect. OK.
+So that's the plan, but again, as I said, um.
+This is what we have in terms of plan or you know high level thought process because this is the most popular approach every everybody is taking. It can be Google Authenticator, it can be Microsoft Authenticator or you know there are few more authenticators which are more popular in the market.
+So we can choose one of them. Now assuming majority of the companies they are either sticking to Google or Microsoft Suite in terms of their Office application, they already have this application installed on their devices. Keeping that in mind, this becomes the, you know, very easy choice from, you know, from user standpoint that we we won't make them struggle too hard or make them download another application for, you know, certain percentages.
+The audience, it doesn't matter which application we use, they will still be downloading the application. But uh, majority of them I think they'll be able to survive with the application they have and few of those can, you know, receive text and.
+You know, add their mobile number as the authentication method, text and those kind of things. So that that can be one of the ways Microsoft definitely pushes the two factor authentication. Everybody is.
+So we we'll see what best can be figured out in due course of time.
+Susan Primrose   18:50
+Well, we're going to want two factor authentication because our cyber insurance company doesn't like that. We don't do it. I've had to explain to them how the picture and so they're like, yeah, it doesn't really work that way, but OK.
+Angela Watts   18:57
+Mhm.
+Lovleet Jain   18:57 OK, OK.
+Yeah.
+And don't tell them it's still 1990s, so OK.
+Louann Sheppard   19:13
+Yeah, I I'm hoping that they don't have to use the Microsoft Authenticator App though, cause that is a pain for so many people. Just at least getting it, you know, like a a code to your phone or something like that would be better.
+Angela Watts   19:28 Yeah, I agree.
+Lovleet Jain   19:28
+Right. So typically my my authenticator method when we use it does provide multiple, you know, mechanisms. So we'll always keep in mind when we get to that point, we'll try to keep multiple authentication methods.
+Louann Sheppard   19:44 OK.
+Lovleet Jain   19:45
+One of the client we were working with, I mean my client's client, they were Onboarding in almost 3500 employees of theirs in in the system and they said we do not want these employees to use either the personal e-mail ID.
+Susan Primrose   19:53 OK.
+20:03
+These are their mobile numbers. All they ever use is just the official e-mail ID. So that is a very unique scenario where we had to make some adjustments in terms of how Microsoft Authenticator can authenticate them in the system while maintaining the two two factor authentication method.
+It.
+Right. So, Susan, will you be sharing your screen back or OK, whenever you're ready.
+Susan Primrose   20:31
+Yep, Yep. Yeah, I'm sorry. I I have a new computer. I do not have my e-mail account personal stuff set up on here, so I had to go back up, OK.
+Lovleet Jain   20:42 No problem.
+Are you sprinting back and forth? Are you sprinting back and forth?
+Angela Watts   20:50 See.
+Louann Sheppard   20:52
+That's why she's breathing hard.
+Susan Primrose   20:52 So.
+Yeah, yeah. I've only been reading my Gmail on my phone, so I was like, crap, now I can set this up. But then I thought, oh, Luann has a copy. All right, so this is now coming from click boarding. This is not 360 at all.
+Lovleet Jain   21:06 Hi.
+Thanks.
+Angela Watts   21:14 Are you not, you know?
+Susan Primrose   21:14
+So we will have to. Oh, I said share screen. Hold on.
+Laurie Dimattei   21:14 Can't see your screen yet.
+Lovleet Jain   21:15 OK, screen.
+Susan Primrose   21:25 Let's try that again. Share. Screen one.
+Angela Watts   21:29 There we go.
+Lovleet Jain   21:30 Yay.
+Susan Primrose   21:31 OK.
+Lovleet Jain   21:32 Yeah, I see it.
+Susan Primrose   21:33
+Move that off my screen. Alright, so this is actually now coming from click boarding. It will send them both. So this is part of the API with click. It will send them an e-mail and a text.
+Lovleet Jain   21:40 OK.
+Susan Primrose   21:49
+So all they have to do is come down here. It automatically uses whatever the username is as their password or their login name and they just click the get started button.
+And now we are in click boarding and it is starting to gather the information. So click boarding is SOX two type 2 compliant and GDPR which is the European one. So I have to create.
+Lovleet Jain   22:14
+Mm-hmm.
+Right.
+Susan Primrose   22:21 Password.
+Lovleet Jain   22:24
+You can just click password, manage password and you yeah that if you have already, if you already have something that's better, but otherwise you can always select Chrome to generate 1.
+Susan Primrose   22:39
+ 
+Yes. Um.
+I cheat when I do this. Every Security question I do, I answer Superman because I do so many of these. I used to do hundreds of these and then I'd be like, I don't know.
+Don't remember what I said. Did I answer the truth? Did I really put where I went to school or did I make something up? So my answer is always Superman. Just in case you want to hack my stuff, it's always Superman.
+Lovleet Jain   23:07 Yeah.
+Yeah.
+OK.
+I have something similar, but that's a secret, so I can't tell you. If I tell you I have to, you know.
+Susan Primrose   23:23 Yeah. Oh.
+Louann Sheppard   23:25 He's not telling.
+You have to kill us, huh? OK, All right. That's a little harder. Long distance, you know?
+Angela Watts   23:33 Yeah.
+Lovleet Jain   23:39 Yeah.
+Susan Primrose   23:41
+All right, so this is this is click boarding. It is. It is designed very nicely, mobile friendly, mobile first, so it will automatically resize as I resize. So like if I'm on.
+Lovleet Jain   23:42 Alright, so we have. OK.
+Susan Primrose   23:57
+If I'm on a a tablet it's gonna go like that and if I go to a cell phone it gets even smaller and the colors even change. They did a really nice job of of doing the the mobile friendly mobile first development.
+Lovleet Jain   23:58 Sure.
+Yep.
+Susan Primrose   24:16
+So all I have to do is click get started and now I'm into the application. So one of the things that allows you to do is create your own welcome messages. You can have a welcome page like this. Luanne actually makes.
+Lovleet Jain   24:17 Sure.
+Susan Primrose   24:34
+Pages for the clients if they want. If they give her a photo and a message, she can make something for them. They sometimes they put in letters from their CEO welcoming them to the company. This one kind of has a little bit of everything because it kind of shows you all the different things that.
+Lovleet Jain   24:39
+Mhm.
+Mhm.
+Susan Primrose   24:52
+It can do. Whoops, where is it going? I guess that was it. Okay, I chose the the scaled down one.
+Louann Sheppard   24:58 I don't know which one you chose. Oh, OK.
+Susan Primrose   25:05
+I forget what it is called. So then they do. They do collect the mobile signature.
+Louann Sheppard   25:07 Short version.
+Lovleet Jain   25:13 Sure.
+Susan Primrose   25:19 Not too bad.
+Louann Sheppard   25:21 Good enough.
+Susan Primrose   25:22
+Not as good as Lou Ann, but at least mine is smiling.
+25:27 Yes.
+Louann Sheppard   25:27 No.
+Susan Primrose   25:30
+All right, then you type it and then what they do is they capture your mobile signature, your type signature and your IP address, date and time stamp on everything when you do that.
+Lovleet Jain   25:35 OK.
+Mhm.
+Sure.
+Susan Primrose   25:51
+Then we can get started here and this application here. I mean at this point in time I plan on keeping click, but I only we signed a two year contract in case we decide we want to build this.
+Lovleet Jain   26:02
+Mhm.
+Got it. Um, how? How long is the contract you said? Um, when does it expire?
+Susan Primrose   26:12
+Uh, it started August 1st and it's a two year contract.
+Lovleet Jain   26:17 Oh, this August 1st. OK.
+Susan Primrose   26:19
+Yes, I had to make a decision in July and they were being really. I was gonna initially sign a one year contract in case we decided we wanted to write this, but.
+Louann Sheppard   26:19 Yep.
+Lovleet Jain   26:25 Sure.
+Susan Primrose   26:35
+They were deliberately going to, like, seriously overcharge me, so.
+ 
+26:42 Sure.
+Susan Primrose   26:59
+Oh, what is it not like? Florida. Oh, did I not pick Florida?
+Lovleet Jain   27:00 What?
+Is it FL? No. Florida. Yeah. Yeah. Yeah. Sometimes it, yeah.
+Susan Primrose   27:06
+Yeah, you know what it is? My thing auto filled it and didn't pick it from a drop down.
+Like, OK.
+No, thanks. Do not save this.
+Thanks. So part of GDPR, it's always going to show them what they did. And then they can preview it. Since this is just a collection page, it's just going to have the logo. And this logo can change this with each client. So like Luanne puts in like if this was Subway sandwich shop, she could
+Lovleet Jain   27:27
+Mhm.
+OK.
+OK.
+One.
+Susan Primrose   27:42
+the subway logo there. And then it just, if it's not a physical form, it just shows you the fields and their responses.
+Lovleet Jain   27:44 Thank you.
+Understood.
+Susan Primrose   27:52
+And then they can download these if they want at any given time. So once I preview it, I'm going to agree the two-step checkout part of GDPR, submit it and now my signature if I went back is on that page.
+Lovleet Jain   28:11
+Mm-hmm.
+Susan Primrose   28:30
+Oops, I don't know where I just went. I think I just hit something.
+28:37 Yeah.
+Susan Primrose   28:37
+Oh, I don't think he'd like that. Oh, well, he can be my friend today.
+Well, it's taken some time for them to do that.
+All right, direct deposit. I'm going to say yes. It shows them the check so that they know where to get the stuff. I can do add new and I'm going to put in B of A.
+Lovleet Jain   29:09 OK.
+Susan Primrose   29:16
+You have to put in a routing number. It has to be 9 digits. It does not check the bank, it just does it.
+Lovleet Jain   29:22
+Mm-hmm.
+Connects it and keeps it.
+Susan Primrose   29:28
+And I'm gonna fit, yeah.
+And now I have a direct deposit. We have a bunch of different direct deposit forms where you can allow them one account, multiple accounts, you can offer them a pay card. It's got all kinds of different options when she's creating the form.
+Lovleet Jain   29:42 OK.
+Susan Primrose   29:50
+And then, as you notice, it shows you what's been done.
+Lovleet Jain   29:54
+Mhm.
+Susan Primrose   29:55
+Other forms. Here's a handbook.
+This handbook might look familiar 'cause I might have taken this from Co Advantage.
+Um, that I grouped a whole bunch of stuff together. Just say that.
+It would allow them to do it. They can download those if they want.
+Lovleet Jain   30:19
+Sure.
+W4.
+Mhm.
+Yeah.
+Susan Primrose   30:34
+Someone like a travel nurse, so I might be traveling out of state.
+Lovleet Jain   30:35
+Mm-hmm.
+Susan Primrose   30:41
+And be living elsewhere during this time period.
+Lovleet Jain   30:45
+Mhm.
+Susan Primrose   30:48
+So once it's validated where I'm going to do it. Now what's happening is click boarding's actually following symmetry tax engine to determine the reciprocity between lived in and worked in.
+Lovleet Jain   31:03 OK.
+Susan Primrose   31:04
+So it only gave me a federal return and that's because the company's based in Florida and I am based in Florida.
+Lovleet Jain   31:09 Florida, yeah.
+Susan Primrose   31:15
+And then at any given time here, if they want, they can get the actual real form and the instructions.
+Lovleet Jain   31:26 Gotcha.
+Susan Primrose   31:27
+So I guess I'll do standard. I want next. They can do this form in English or in Spanish.
+One of the federal state laws is you have to offer it to them in Spanish now, which is a real pain for us because we can't read them.
+Lovleet Jain   31:47
+ 
+Hmm.
+Is this the standard W4 format or this is a custom one right? It doesn't look like the the PDF version which is.
+Susan Primrose   31:57
+This is.
+Yeah.
+This is just going through asking you the questions if I because I'm using the wizard. But if I come over here, this is the actual standard form and all the pages of instructions. What it's doing is it's walking me through all of the the steps here.
+Lovleet Jain   32:05
+Hmm.
+I see. Oh.
+Understood.
+Yes.
+That is. Yeah.
+Susan Primrose   32:20
+So I'm going to get back to the wizard. The wizard is so much easier.
+Lovleet Jain   32:23
+Mm-hmm.
+Susan Primrose   32:24
+I'm just going to be exempt so I don't have to go through it.
+Angela Watts   32:29
+I like that it has the wizard because that takes a lot of the user error stuff, you know, some of it anyway, away.
+Lovleet Jain   32:39
+Hmm.
+Louann Sheppard   32:39 Sometimes.
+Susan Primrose   32:41
+Yeah, yeah. We have found that the worst people in the United States to fill this out are school teachers. The ones that teach our children are the absolute worst at doing these, which is scary.
+Angela Watts   32:42 Yeah.
+Louann Sheppard   32:48 Yes.
+Yes.
+I I can't tell you horrible.
+Susan Primrose   32:57
+We have, we had a client that mainly their clients were charter schools and boy did we have problems with those people. Poor Luanne had to work with them every day and it's like and you're the people teaching our children.
+Louann Sheppard   33:09 Yep.
+Susan Primrose   33:12
+OK, so so here I just have to say that under perjury I'm going to do this right. And at this point, if they want, they can print this out, they can download it, they can always come back and get it too.
+Lovleet Jain   33:13 Right.
+Sure.
+Mm-hmm.
+Susan Primrose   33:28
+So that the employee has a copy.
+Lovleet Jain   33:31 Yeah.
+Susan Primrose   33:35
+And I finished it. And then I don't know what she has next, if anything, because this is a short version I don't do. Oh, she does have something next. OK, so she has the I-9 here. Some people want the I-9, some people don't.
+Lovleet Jain   33:47 I then.
+Susan Primrose   33:51
+With the I-9, with the other things you saw that it filled in my credentials. Because this is the I-9, it does not fill them in.
+Lovleet Jain   33:54
+It.
+Mhm.
+Susan Primrose   34:01
+And that is because we're not supposed to help them, so.
+Lovleet Jain   34:06
+Mhm.
+Susan Primrose   34:14
+Oh, I guess. Do I have to put something there like Na?
+Angela Watts   34:21
+Um, actually, it may be talking about the address. Um, Scroll down.
+Susan Primrose   34:27
+Oh, there is more. I didn't see the scroll bar. Sorry.
+Angela Watts   34:30 But wait, there's more.
+Lovleet Jain   34:31 Uh.
+Susan Primrose   34:33 Yeah. Thanks.
+And I already know it's gonna make me do that.
+And I think I have to say nobody helped me. Yep.
+Louann Sheppard   34:57 Yes.
+Susan Primrose   35:04 Look the scroll bar.
+I like when this all fit on one page before, nice and easier. And if I preview this, it's going to actually be the I-9 to see when it is our true form, it shows you the true form filled out.
+Lovleet Jain   35:10 Yeah, mm-hmm.
+Right.
+Susan Primrose   35:24 Oops, I didn't agree to it.
+Need to scroll.
+Lovleet Jain   35:29 Hold on, yeah.
+Susan Primrose   35:35
+I used to like how this and I'm done. So now back over. I'm probably too late. Yeah, I missed it.
+Lovleet Jain   35:37 And you're done.
+Susan Primrose   35:51
+Um, now the the hiring manager got an e-mail to come out and approve my I9.
+Lovleet Jain   35:58 OK.
+Susan Primrose   36:01
+So what's happening over here is under hire managed candidates.
+Lovleet Jain   36:03 OK.
+Susan Primrose   36:10 Thinking about it.
+Um. hate the filter. Do I need to use the filter? No. Okay, Susan, you'll notice here. Umm If you look at this, you can see what they use to hire me.
+Lovleet Jain   36:33 And.
+Susan Primrose   36:34
+With it shows you all the the credentials here. It's going to show you that I completed the forms. They can monitor this along the way. They can either look at it in this form or they can look at it in this form where we kind of group this stuff together based on the color, you know if they did it.
+Lovleet Jain   36:45 Yes.
+Susan Primrose   36:53
+And then at this point in time, I can now take the pen. Should be able to take the pen.
+Louann Sheppard   37:00
+Do a refresh. Do a refresh.
+Angela Watts   37:00 Hello.
+Louann Sheppard   37:06
+Oops, you could have just refreshed that one screen at the bottom. There's the little roundabout arrows at the bottom, yeah.
+Susan Primrose   37:12
+Oh yeah, I didn't see it. I did not see it. Whoops, too fast.
+Angela Watts   37:24 No.
+Susan Primrose   37:26 This guy.
+Now they can finish it.
+Louann Sheppard   37:33
+And certify it.
+Susan Primrose   37:34 Yeah.
+So at this point they get my stuff, and then they decide what they're going to do. I'm going to say use the US passport. No, stop saving my stuff.
+Lovleet Jain   37:37 OK.
+Susan Primrose   38:14 Oops.
+Louann Sheppard   38:37
+It doesn't matter. You put anything you want in there.
+Susan Primrose   38:39 I know, yeah.
+All right, and then my 9 stunned. And if it's a state where there's E-verify, it comes up for me to do E-verify.
+And then at that point 360 has me over here. I'm pending. I need to do this refresh. I can then send myself over to payroll and this is when they would like.
+Louann Sheppard   39:06 Yeah.
+Lovleet Jain   39:09 So OK.
+Susan Primrose   39:11
+This is when we'd like them to actually get an account created and stuff. Where am I? Come on.
+Louann Sheppard   39:17
+Instead of instead of it having to be downloaded and all that, it actually goes over to another section and then they have to download the file, take it over to pay plus and upload the file instead of it just going over there.
+Susan Primrose   39:32
+Yeah, and so this is where like now what I do is I say send the payroll. And what we really want to do is just add that person to the database and not have. My goodness, what the heck? Oh, nice.
+Louann Sheppard   40:01
+Oh, great. I hope that hasn't broken that for everybody.
+Well, if it had, I if it, if it had, if it had, I'd be hearing from everybody, so I don't think so. But yeah, this happens all the time.
+Lovleet Jain   40:07 Error during the.
+Mm.
+Susan Primrose   40:15 I don't know I.
+Lovleet Jain   40:22
+The updated version of the.
+Louann Sheppard   40:23 Go go back up to it, Sue.
+Susan Primrose   40:26
+That's what I'm looking for me. It's right here.
+Louann Sheppard   40:30 Huh.
+Susan Primrose   40:31 Let's try it again.
+Louann Sheppard   40:34
+Oh, there it worked. It worked that time. It should be over in uh.
+Susan Primrose   40:37 Yeah.
+Louann Sheppard   40:42
+It it's in tools tools.
+Lovleet Jain   40:43 Open.
+Susan Primrose   40:45
+I always forget where the hell it goes.
+Lovleet Jain   40:46 OK.
+Louann Sheppard   40:46 Tools tools manage existing.
+Lovleet Jain   40:48 So you think that I'm.
+Susan Primrose   40:52 Oh, I'm not there.
+Louann Sheppard   40:54 Um.
+Refresh.
+I think you can refresh. Oh, there's no refresh there too.
+Susan Primrose   41:00 Hello.
+I got a refreshing up here.
+Louann Sheppard   41:09
+No, he's still not there.
+This is the kind of stuff that we have to do all the time.
+Whenever they yes, this is done. So I don't. I don't.
+Susan Primrose   41:25
+It says it.
+But I didn't make it.
+Louann Sheppard   41:30
+Oh, oh, I know what you do. Go. Go back over there. Click on. Um. Uh, click on a re click on a manage existing and click on rehires.
+Susan Primrose   41:37 Uh, I hate that Dang toolbar.
+Louann Sheppard   41:45 Rehire, yeah.
+Susan Primrose   41:45 Rehiring.
+Louann Sheppard   41:48
+Just click on rehire. See it's so it's over by word employment types. Yeah, click on that.
+Susan Primrose   41:49 Why do I? I don't see me higher. Oh.
+Louann Sheppard   41:56 There we go.
+Susan Primrose   42:00
+Oh, because I was, uh, in here before.
+Louann Sheppard   42:01
+You have your names in here, yeah?
+Lovleet Jain   42:02
+SSN and name both, maybe a combination, something like that.
+Susan Primrose   42:06 Yeah.
+Louann Sheppard   42:08
+Is this still there?
+Susan Primrose   42:13
+Um, that's funny. That's probably it.
+Louann Sheppard   42:14 August 20th, is that it?
+Yeah, just just, uh, yeah, I bet that's it. Oh.
+Susan Primrose   42:19 No, that's 2020.
+Angela Watts   42:22
+That first load up at the very top.
+Lovleet Jain   42:23
+No, we are 18th August 2025.
+Louann Sheppard   42:23 The top at the very top.
+Susan Primrose   42:24
+That's it. This one's it, yeah.
+Louann Sheppard   42:27
+Yep, that's that's why. And this happens all the time, especially at the the the firehouses.
+Lovleet Jain   42:37 Firehouses.
+Louann Sheppard   42:39
+Oh, we have, we have a client that does all the firehouse subs they do. They probably have 160 firehouse subs locations and the people, you know, they're they're teenagers. So they work at firehouse while they're in school and then they go home and then.
+Lovleet Jain   42:41 OK, OK.
+I see.
+Louann Sheppard   42:58
+They come back and they get rehired and a lot of times the the time period has passed and they have to fill out new paperwork so that it's a rehire because they've already been in the system once, yeah.
+Lovleet Jain   43:07 I understood.
+Understood. Understood. OK.
+So now what's the next step?
+Susan Primrose   43:16
+So now we have to like what the client would do is they can add the work comp code.
+Lovleet Jain   43:21 OK.
+Mm-hmm.
+Susan Primrose   43:28 Oh, maybe.
+Louann Sheppard   43:28 Assign assign work code. There you go.
+Susan Primrose   43:37
+And then they can read this from a table.
+Lovleet Jain   43:43 OK.
+Susan Primrose   43:44
+I guess I'll be clerical.
+Lovleet Jain   43:51 Just, OK.
+So this is basically done by.
+Susan Primrose   43:56
+Oh, I clicked that button.
+I hate that. Have me click the number.
+So then after that then what they do is they download this and it becomes an Excel spreadsheet.
+Well, if I got to select them all.
+And now up here now they have to. We have to move this over to a directory over in the pay plus server and it. Then they we go and upload this.
+Lovleet Jain   44:37 OK.
+Oh, so then.
+Susan Primrose   44:40
+But it would be nice for this just to move and do all this stuff on its own, which is what we've asked them to do, which is funny because the change of addresses and that kind of stuff does it itself. But this one, it makes you do it. It makes you do it manually.
+Lovleet Jain   44:45 Right, right.
+Or like file upload, right?
+Louann Sheppard   44:56
+And there's way more of these. There's way more of these being done than change of address, I can tell you. I mean, we've got one client that does about 400 new hires a month.
+Lovleet Jain   45:11
+Hmm.
+Susan Primrose   45:14
+I just wondered why that one row is so big.
+Lovleet Jain   45:15 Wow, that's.
+Louann Sheppard   45:18
+They're all like that.
+Susan Primrose   45:21
+Oh, it's the address, e-mail address.
+Louann Sheppard   45:24 Mhm.
+Susan Primrose   45:25
+I wondered why I'm like, what's that that road so wide? 1.
+Lovleet Jain   45:37
+OK, so this file is then uploaded into where?
+Susan Primrose   45:41
+So then we have to go and we have to put this file out in our utils directory and pay plus.
+Lovleet Jain   45:50
+Mhm.
+Susan Primrose   45:50
+And then it then we can upload it in the back office.
+Lovleet Jain   45:57
+Got it. OK. And Kruti, you have a question. Go ahead.
+So I just want to ask you like when you click tools, when you click tools and there is an option under add personal create new. So I want to ask like can you go to the tool?
+Susan Primrose   46:18 Yep, Yep, I gotta go back. So yes, you can add.
+Lovleet Jain   46:28 No, just create.
+Susan Primrose   46:28 You can add.
+Louann Sheppard   46:28 No, no, no personnel.
+Susan Primrose   46:31
+I saw where she wants me to go. Yeah, hold on. Tools. Oh, I hate this. I know, Lori. I just can't. It's just it is just so freaking sensitive. It's such a pain in the rear. You can key an entire employee.
+Lovleet Jain   46:34
+Click on tools, go down, no left, create new.
+Laurie Dimattei   46:35 Personnel.
+Susan Primrose   46:51
+And it just shows you every field in pay plus one screen at a time.
+Louann Sheppard   46:56
+But there's no forms or anything, so you still have to do paper I nines, paper tax forms. There's no handbook, so if they needed to sign off on handbooks or any other mandatory forms.
+Susan Primrose   46:58 Right.
+Louann Sheppard   47:13
+They have to do the. They have to do a paper package to do this.
+But it is possible.
+Lovleet Jain   47:21 So, so.
+Susan Primrose   47:21
+And we have people that use this. We actually have Donna. Uses this.
+Louann Sheppard   47:29 She's a crazy person.
+Susan Primrose   47:31
+I know I don't get it, but.
+Lovleet Jain   47:31 Yes.
+So what is the reason we are using it?
+Susan Primrose   47:38
+Because they think it is just, well, probably because we do charge for click. Sometimes the clients don't want to pay. Um.
+Lovleet Jain   47:38 Additional forms, he said. OK, OK.
+Louann Sheppard   47:52
+Or they think that it's too difficult for their clientele to use the onboarding. I've got one. Yeah, I've got one. Well, Donna's Donna is one of the ones. She's they hire people immediately, like they might have roofers or something like that, and they've got to get them into the system.
+Lovleet Jain   47:53 OK.
+I see, yeah. Yeah.
+Louann Sheppard   48:12
+So they'll use this so that they get them right into the system, but they I think this doesn't go right in, does it? It it has to still be migrated in, right?
+Laurie Dimattei   48:18 Yeah.
+Yes, something needs to be imported. Reliable uses it for all their new hires.
+Susan Primrose   48:22 Yeah.
+Louann Sheppard   48:23 Yeah.
+Susan Primrose   48:28
+I think it's easier to came in the back office, but they came over here. Don't ask me why.
+Laurie Dimattei   48:35
+Well, because reliable doesn't key it. The manager at the hotel keys it in and then she just has to import some.
+Susan Primrose   48:39
+Oh, they're making the manager kit. Uh.
+Louann Sheppard   48:39 Right, right.
+Right. They they want to go on click.
+Susan Primrose   48:45 What?
+They need to and why is my view? There we go. I'm like my view is skewed.
+Louann Sheppard   48:49 Yeah.
+Lovleet Jain   48:53
+How much does the click cost per employee?
+Susan Primrose   48:58 12:50.
+Lovleet Jain   49:01
+$12.50 per employee per hiring, right? One time. Got it.
+Susan Primrose   49:04 Yes.
+Louann Sheppard   49:04 Yes, yes. Yes.
+Lovleet Jain   49:10
+And what is the frequency of total hires? Like how many of them are hired every year?
+Susan Primrose   49:17 So we have um.
+We have a couple thousand a month get hired, so 120,000, something like that. 
+I don't know. I'd have to do the math, have to go look at the Excel spreadsheet. I don't remember the number from just negotiating the contract.
+Lovleet Jain   49:34 OK.
+Sure, sure.
+Louann Sheppard   49:42
+Many of the clients pass that fee to their clients, so they don't pay it themselves. They they make money. Yeah, they might charge the client $15 a a client a higher.
+Susan Primrose   49:46
+Most of them make money, yeah.
+I know Rebecca charges 25 and she pays us, you know, less, so she makes money on it.
+Lovleet Jain   49:55 I see.
+Louann Sheppard   49:57 Yeah.
+Yeah.
+Susan Primrose   50:03
+And she has accurate documents, completely signed, stored.
+Louann Sheppard   50:07 Yep.
+Yep.
+Lovleet Jain   50:18 Makes sense.
+Susan Primrose   50:19 Oh, so.
+And here you have to keep doing the. You have to keep using the arrow key to keep entering them each segment.
+Lovleet Jain   50:27
+Sure. So so generally speaking this is the same stuff but it's not in the clicks click hire, it's it's outside click hire. It is sitting in 36 St. itself.
+Susan Primrose   50:41
+Yes, and these are actually all the fields in pay plus.
+Lovleet Jain   50:42
+And what is the edge?
+Makes sense. Uh, what is the reason or what is the edge while using click sense? Click um, click higher.
+Susan Primrose   50:57 What is the say that again?
+Lovleet Jain   50:58
+What is the advantage of using Click Hire? If they're paying $12.00 additional, what do they get in? Mm-hmm.
+Susan Primrose   51:03 Uh.
+Because because they don't have physical forms, this is just entering the data. So somebody still had to go and gather the application on paper. So and then they need to store those paper documents cause.
+The person keying this got the information from the employee. The employee would not be keying this themselves. So the employee filled out a paper application, a paper I-9, a paper W-4, all this stuff. And now the manager is just keying from the paper and now the manager then needs to scan those documents.
+Lovleet Jain   51:32
+Mhm.
+Louann Sheppard   51:34 W4 Mm-hmm.
+Susan Primrose   51:42
+Events and storms somewhere. So that's the advantage of the electronic hire is you have all the paperwork, it's already filed away.
+Lovleet Jain   51:53
+Understood. OK, really quick time check. It's almost one hour. You wanna pause here and pick it up once again on Wednesday?
+Susan Primrose   52:07 That's fine.
+Lovleet Jain   52:09
+OK. And uh, if you think we are still open to meet Connor and Steve tomorrow, you know what if you are available? Um.
+Susan Primrose   52:17
+Oh, I I know that we're not gonna meet until Thursday because I noticed Mark Lewis say Thursday.
+Lovleet Jain   52:26
+OK, OK. So in that case, should we continue meeting, continue our meeting same time every day, one hour?
+Louann Sheppard   52:27
+Mm.
+Susan Primrose   52:28
+Yeah, he wants to do it on Thursday. That's fine.
+Lovleet Jain   52:40
+OK, OK, great. So perfect. I think this this overview was definitely, definitely very helpful and we were wondering you know how to use this particular onboarding. So I think we were.
+We'll connect a lot of dots, right, Priti? Um, OK. Any other questions we have for today's one or you wanna compose and send it back? OK, OK.
+Louann Sheppard   53:06 Yeah.
+Yeah, if we're going to continue to interface with Qlik, there is a full API document and we have good contacts with the support people over at Qlik and the technicians and they're they're pretty good people to work with, so.
+Lovleet Jain   53:10
+It.
+OK.
+Louann Sheppard   53:24
+If we're, if we're, I mean, we're pretty tied into click for at least the next two years. So we'll have to, we'll have to have some vehicle. Mm-hmm.
+Lovleet Jain   53:25 Sure.
+Susan Primrose   53:32
+We'll have to do it so and I already did tell them that we were rewriting the product and that we would have to redo the API, so they they are expecting it.
+Lovleet Jain   53:35 Understood.
+Gotcha. OK, OK, that's great.
+Superb. All right. Thank you so much. Uh, ladies. I think this is very productive uh session and looking forward to many more of them uh in coming weeks. 10 days.
+Louann Sheppard   54:02
+OK. Have a great day, guys. Thank you.
+Lovleet Jain   54:02 OK, alright.
+Thank you. Thank you so much.
+Laurie Dimattei   54:06 Thank you.
+Susan Primrose   54:07 Bye.
+Angela Watts   54:08 Bye.
+Lovleet Jain   54:10 Bye, bye.
+Apeksha Saraf   54:11 Thank you. Bye-bye.
+Lovleet Jain stopped transcription

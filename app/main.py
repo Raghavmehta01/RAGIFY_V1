@@ -4,7 +4,12 @@
 # For Gemini: set GOOGLE_API_KEY
 
 import os, json
+from typing import TypedDict, Annotated, Sequence, TYPE_CHECKING
 from http.server import HTTPServer, SimpleHTTPRequestHandler
+
+if TYPE_CHECKING:
+    from langchain_core.messages import BaseMessage
+    from langgraph.graph.message import add_messages
 
 # Load environment variables from .env file if available
 try:
@@ -363,6 +368,136 @@ def add_url_to_vectorstore(url):
     except Exception as e:
         return False, f"Error: {str(e)}"
 
+# Function to add uploaded files (PDF/Word/Text) to vectorstore
+def add_file_to_vectorstore(file_content, filename, file_type):
+    """Add a PDF, Word, or Text document to the vector store"""
+    try:
+        from langchain_core.documents import Document as LangChainDoc
+        import io
+        import tempfile
+        
+        new_docs = []
+        
+        if file_type == "application/pdf":
+            # Handle PDF
+            from langchain_community.document_loaders import PyPDFLoader
+            with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp_file:
+                tmp_file.write(file_content)
+                tmp_path = tmp_file.name
+            
+            try:
+                loader = PyPDFLoader(tmp_path)
+                new_docs = loader.load()
+                # Add filename to metadata
+                for doc in new_docs:
+                    doc.metadata['source'] = filename
+                    doc.metadata['type'] = 'pdf'
+            finally:
+                os.unlink(tmp_path)
+        elif file_type in ["application/vnd.openxmlformats-officedocument.wordprocessingml.document", "application/msword"]:
+            # Handle Word documents (.docx and .doc)
+            from docx import Document
+            try:
+                doc = Document(io.BytesIO(file_content))
+                paragraphs = []
+                for para in doc.paragraphs:
+                    if para.text.strip():
+                        paragraphs.append(para.text)
+                
+                if not paragraphs:
+                    return False, "Word document appears to be empty or could not be read."
+                
+                # Create a single document from all paragraphs
+                full_text = "\n\n".join(paragraphs)
+                new_docs = [LangChainDoc(
+                    page_content=full_text,
+                    metadata={"source": filename, "type": "word"}
+                )]
+            except Exception as e:
+                return False, f"Failed to read Word document: {str(e)}"
+        elif file_type == "text/plain" or filename.lower().endswith('.txt'):
+            # Handle text files
+            try:
+                # Decode the file content
+                if isinstance(file_content, bytes):
+                    text_content = file_content.decode('utf-8')
+                else:
+                    text_content = file_content
+                
+                if not text_content.strip():
+                    return False, "Text file appears to be empty."
+                
+                new_docs = [LangChainDoc(
+                    page_content=text_content,
+                    metadata={"source": filename, "type": "text"}
+                )]
+            except UnicodeDecodeError:
+                return False, "Failed to decode text file. Please ensure it's UTF-8 encoded."
+            except Exception as e:
+                return False, f"Failed to read text file: {str(e)}"
+        else:
+            return False, f"Unsupported file type: {file_type}. Please upload PDF, Word, or Text documents."
+        
+        if not new_docs:
+            return False, "Failed to extract content from the file. The file might be empty or corrupted."
+        
+        # Check if documents have meaningful content
+        total_content = sum(len(d.page_content) for d in new_docs)
+        if total_content < 50:
+            return False, f"File loaded but has very little content ({total_content} chars). Please ensure the file contains readable text."
+        
+        # Chunk the documents using the same strategy as URLs
+        if CHUNKING_STRATEGY == "semantic" and HAS_SEMANTIC:
+            embedder_for_split = HuggingFaceEmbeddings(model_name=EMBED_MODEL)
+            text_splitter_new = SemanticChunker(
+                embedder_for_split,
+                breakpoint_threshold_type="percentile",
+                breakpoint_threshold_amount=0.3,
+                min_chunk_size=300,
+                buffer_size=64,
+            )
+            new_splits = text_splitter_new.split_documents(new_docs)
+        elif CHUNKING_STRATEGY == "markdown":
+            headers_to_split_on = [("#","h1"),("##","h2"),("###","h3"),("####","h4")]
+            md_header_splitter = MarkdownHeaderTextSplitter(headers_to_split_on=headers_to_split_on)
+            md_docs = []
+            for d in new_docs:
+                for md in md_header_splitter.split_text(d.page_content):
+                    md.metadata.update(d.metadata)
+                    md_docs.append(md)
+            text_splitter_new = RecursiveCharacterTextSplitter(chunk_size=700, chunk_overlap=120)
+            new_splits = text_splitter_new.split_documents(md_docs or new_docs)
+        else:
+            text_splitter_new = RecursiveCharacterTextSplitter(
+                chunk_size=700,
+                chunk_overlap=120,
+                add_start_index=True,
+                separators=["\n\n", "\n", ". ", "? ", "! ", "; ", ": ", ", ", " ", ""],
+            )
+            new_splits = text_splitter_new.split_documents(new_docs)
+        
+        # Add to vectorstore
+        global vectorstore
+        vectorstore.add_documents(new_splits)
+        
+        # Track uploaded file
+        FILES_FILE = os.path.join(PERSIST_DIR, ".loaded_files.txt")
+        os.makedirs(PERSIST_DIR, exist_ok=True)
+        with open(FILES_FILE, 'a') as f:
+            f.write(f"{filename}|{file_type}\n")
+        
+        # Update retriever to include new documents
+        global retriever
+        retriever = vectorstore.as_retriever(
+            search_kwargs={
+                "k": 5,
+            }
+        )
+        
+        return True, f"Successfully added {len(new_splits)} chunks from {filename}. You can now ask questions about this document."
+    except Exception as e:
+        return False, f"Error processing file: {str(e)}"
+
 # Initialize LLM
 # LLM will be created dynamically per request based on user selection
 
@@ -389,11 +524,233 @@ def format_docs(docs):
 
 # RAG chain will be created dynamically per request based on selected provider/model
 
+# ===== HR Agent with LangGraph =====
+try:
+    from langgraph.graph import StateGraph, END
+    from langgraph.graph.message import add_messages
+    from typing import TypedDict, Annotated, Sequence
+    from langchain_core.messages import BaseMessage, HumanMessage, AIMessage
+    from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
+    HAS_LANGGRAPH = True
+except ImportError:
+    HAS_LANGGRAPH = False
+    print("⚠️  LangGraph not available. HR Agent will use simple LLM responses.")
+    # Define dummy types for when LangGraph is not available
+    BaseMessage = None
+    add_messages = None
+
+# HR Agent State (only used when LangGraph is available)
+if HAS_LANGGRAPH:
+    class HRState(TypedDict):
+        messages: Annotated[Sequence[BaseMessage], add_messages]
+        service: str
+        context: dict
+else:
+    # Dummy class for when LangGraph is not available
+    class HRState:
+        pass
+
+def create_hr_agent_graph(service_type):
+    """Create LangGraph workflow for HR agent based on service type"""
+    if not HAS_LANGGRAPH:
+        return None
+    
+    # Define workflow nodes
+    def route_request(state: HRState):
+        """Route to appropriate handler based on service - returns state unchanged"""
+        return state
+    
+    def handle_leave(state: HRState):
+        """Handle leave management requests"""
+        messages = state["messages"]
+        last_message = messages[-1].content if messages else ""
+        
+        # Create specialized prompt for leave management
+        prompt = ChatPromptTemplate.from_messages([
+            ("system", """You are an HR assistant specialized in Leave Management.
+            You can help with:
+            - Checking leave balance
+            - Requesting leaves (sick, vacation, personal)
+            - Viewing leave history
+            - Explaining leave policies
+            
+            Be helpful, professional, and provide specific information when available.
+            If you need employee ID or dates, ask for them."""),
+            MessagesPlaceholder(variable_name="messages"),
+        ])
+        
+        llm = get_llm(provider=LLM_PROVIDER)
+        chain = prompt | llm
+        response = chain.invoke({"messages": messages})
+        
+        return {
+            "messages": [AIMessage(content=response.content if hasattr(response, 'content') else str(response))]
+        }
+    
+    def handle_payroll(state: HRState):
+        """Handle payroll management requests"""
+        messages = state["messages"]
+        
+        prompt = ChatPromptTemplate.from_messages([
+            ("system", """You are an HR assistant specialized in Payroll Management.
+            You can help with:
+            - Viewing payslips
+            - Understanding salary breakdown
+            - Tax information
+            - Deductions and benefits
+            - Pay schedule
+            
+            Be professional and provide clear explanations.
+            If you need specific employee information, ask for employee ID."""),
+            MessagesPlaceholder(variable_name="messages"),
+        ])
+        
+        llm = get_llm(provider=LLM_PROVIDER)
+        chain = prompt | llm
+        response = chain.invoke({"messages": messages})
+        
+        return {
+            "messages": [AIMessage(content=response.content if hasattr(response, 'content') else str(response))]
+        }
+    
+    def handle_recruitment(state: HRState):
+        """Handle recruitment management requests"""
+        messages = state["messages"]
+        
+        prompt = ChatPromptTemplate.from_messages([
+            ("system", """You are an HR assistant specialized in Recruitment Management.
+            You can help with:
+            - Posting job openings
+            - Reviewing applications
+            - Scheduling interviews
+            - Candidate screening
+            - Job descriptions
+            
+            Be professional and guide through the recruitment process.
+            If you need job details or candidate information, ask for specifics."""),
+            MessagesPlaceholder(variable_name="messages"),
+        ])
+        
+        llm = get_llm(provider=LLM_PROVIDER)
+        chain = prompt | llm
+        response = chain.invoke({"messages": messages})
+        
+        return {
+            "messages": [AIMessage(content=response.content if hasattr(response, 'content') else str(response))]
+        }
+    
+    def general_response(state: HRState):
+        """General HR response"""
+        messages = state["messages"]
+        
+        prompt = ChatPromptTemplate.from_messages([
+            ("system", "You are a helpful HR assistant. Provide friendly and professional assistance."),
+            MessagesPlaceholder(variable_name="messages"),
+        ])
+        
+        llm = get_llm(provider=LLM_PROVIDER)
+        chain = prompt | llm
+        response = chain.invoke({"messages": messages})
+        
+        return {
+            "messages": [AIMessage(content=response.content if hasattr(response, 'content') else str(response))]
+        }
+    
+    # Router function for conditional edges
+    def route_decision(state: HRState):
+        """Route to appropriate handler based on service"""
+        service = state.get("service", "")
+        if service == "leave":
+            return "handle_leave"
+        elif service == "payroll":
+            return "handle_payroll"
+        elif service == "recruitment":
+            return "handle_recruitment"
+        return "general_response"
+    
+    # Build graph
+    workflow = StateGraph(HRState)
+    
+    # Add nodes
+    workflow.add_node("route", route_request)
+    workflow.add_node("handle_leave", handle_leave)
+    workflow.add_node("handle_payroll", handle_payroll)
+    workflow.add_node("handle_recruitment", handle_recruitment)
+    workflow.add_node("general_response", general_response)
+    
+    # Set entry point
+    workflow.set_entry_point("route")
+    
+    # Set conditional edges from route
+    workflow.add_conditional_edges(
+        "route",
+        route_decision,
+        {
+            "handle_leave": "handle_leave",
+            "handle_payroll": "handle_payroll",
+            "handle_recruitment": "handle_recruitment",
+            "general_response": "general_response"
+        }
+    )
+    
+    # All handlers end
+    workflow.add_edge("handle_leave", END)
+    workflow.add_edge("handle_payroll", END)
+    workflow.add_edge("handle_recruitment", END)
+    workflow.add_edge("general_response", END)
+    
+    return workflow.compile()
+
+# Simple HR agent (fallback if LangGraph not available)
+def simple_hr_agent(service: str, message: str):
+    """Simple HR agent without LangGraph"""
+    service_prompts = {
+        "leave": """You are an HR assistant specialized in Leave Management.
+        You can help with:
+        - Checking leave balance
+        - Requesting leaves (sick, vacation, personal)
+        - Viewing leave history
+        - Explaining leave policies
+        
+        Be helpful, professional, and provide specific information when available.""",
+        "payroll": """You are an HR assistant specialized in Payroll Management.
+        You can help with:
+        - Viewing payslips
+        - Understanding salary breakdown
+        - Tax information
+        - Deductions and benefits
+        - Pay schedule
+        
+        Be professional and provide clear explanations.""",
+        "recruitment": """You are an HR assistant specialized in Recruitment Management.
+        You can help with:
+        - Posting job openings
+        - Reviewing applications
+        - Scheduling interviews
+        - Candidate screening
+        - Job descriptions
+        
+        Be professional and guide through the recruitment process."""
+    }
+    
+    prompt_text = service_prompts.get(service, "You are a helpful HR assistant.")
+    prompt = ChatPromptTemplate.from_template(f"{prompt_text}\n\nUser: {{message}}\n\nAssistant:")
+    
+    llm = get_llm(provider=LLM_PROVIDER)
+    response = llm.invoke(prompt.format(message=message))
+    
+    return response.content if hasattr(response, 'content') else str(response)
+
 class Handler(SimpleHTTPRequestHandler):
     def do_GET(self):
         """Serve static files (HTML, CSS, JS)"""
+        # Get base directory (parent of app/)
+        base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        frontend_dir = os.path.join(base_dir, 'frontend')
+        
         if self.path == "/" or self.path == "/index.html":
             self.path = "/index.html"
+        
         try:
             # Map file extensions to MIME types
             mime_types = {
@@ -415,11 +772,18 @@ class Handler(SimpleHTTPRequestHandler):
                 self.send_error(403, "Forbidden")
                 return
             
+            # Look for file in frontend directory
+            full_path = os.path.join(frontend_dir, file_path)
+            
+            # If file doesn't exist in frontend, try root (for backward compatibility)
+            if not os.path.exists(full_path):
+                full_path = os.path.join(base_dir, file_path)
+            
             ext = os.path.splitext(file_path)[1]
             content_type = mime_types.get(ext, 'application/octet-stream')
             
             try:
-                with open(file_path, 'rb') as f:
+                with open(full_path, 'rb') as f:
                     content = f.read()
                 self.send_response(200)
                 self.send_header("Content-Type", content_type)
@@ -433,7 +797,69 @@ class Handler(SimpleHTTPRequestHandler):
             self.send_error(500, str(e))
     
     def do_POST(self):
-        if self.path == "/add-url":
+        # Normalize path (remove query string and trailing slashes)
+        path = self.path.split('?')[0].rstrip('/')
+        if not path:
+            path = '/'
+        
+        # Debug: print the path being requested
+        print(f"DEBUG: POST request to path: '{path}' (original: '{self.path}')")
+        
+        if path == "/hr-agent":
+            # HR Agent endpoint
+            try:
+                length = int(self.headers.get("Content-Length", "0"))
+                body = self.rfile.read(length).decode("utf-8")
+                data = json.loads(body) if body else {}
+                service = (data.get("service") or "").strip()
+                message = (data.get("message") or "").strip()
+                
+                if not service or not message:
+                    self.send_error(400, "service and message are required")
+                    return
+                
+                # Process HR agent request
+                if HAS_LANGGRAPH:
+                    try:
+                        # Create or get graph for this service
+                        graph = create_hr_agent_graph(service)
+                        if graph:
+                            # Use LangGraph workflow
+                            state = {
+                                "messages": [HumanMessage(content=message)],
+                                "service": service,
+                                "context": {}
+                            }
+                            result = graph.invoke(state)
+                            response_text = result["messages"][-1].content if result.get("messages") else "No response generated"
+                        else:
+                            response_text = simple_hr_agent(service, message)
+                    except Exception as e:
+                        print(f"LangGraph error: {e}")
+                        response_text = simple_hr_agent(service, message)
+                else:
+                    response_text = simple_hr_agent(service, message)
+                
+                payload = {"response": response_text}
+                blob = json.dumps(payload).encode("utf-8")
+                
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json")
+                self.send_header("Content-Length", str(len(blob)))
+                self.send_header("Access-Control-Allow-Origin", "*")
+                self.end_headers()
+                self.wfile.write(blob)
+            except Exception as e:
+                msg = json.dumps({"response": f"Error: {str(e)}"}).encode("utf-8")
+                self.send_response(500)
+                self.send_header("Content-Type", "application/json")
+                self.send_header("Content-Length", str(len(msg)))
+                self.send_header("Access-Control-Allow-Origin", "*")
+                self.end_headers()
+                self.wfile.write(msg)
+            return
+        
+        if path == "/add-url":
             # New endpoint to add URLs
             try:
                 length = int(self.headers.get("Content-Length", "0"))
@@ -469,9 +895,94 @@ class Handler(SimpleHTTPRequestHandler):
                 self.wfile.write(msg)
             return
         
-        if self.path != "/ask":
-            self.send_error(404, "Not Found")
+        if path == "/upload-file":
+            # Handle file uploads (PDF/Word)
+            try:
+                import cgi
+                import tempfile
+                
+                content_type = self.headers.get("Content-Type", "")
+                if not content_type.startswith("multipart/form-data"):
+                    self.send_error(400, "Content-Type must be multipart/form-data")
+                    return
+                
+                # Parse multipart form data using cgi
+                form = cgi.FieldStorage(
+                    fp=self.rfile,
+                    headers=self.headers,
+                    environ={
+                        'REQUEST_METHOD': 'POST',
+                        'CONTENT_TYPE': content_type,
+                        'CONTENT_LENGTH': self.headers.get("Content-Length", "0")
+                    }
+                )
+                
+                if 'file' not in form:
+                    self.send_error(400, "No file provided")
+                    return
+                
+                file_item = form['file']
+                if not hasattr(file_item, 'filename') or not file_item.filename:
+                    self.send_error(400, "No filename provided")
+                    return
+                
+                filename = file_item.filename
+                file_content = file_item.file.read()
+                file_type = file_item.type or "application/octet-stream"
+                
+                # Validate file type
+                allowed_types = [
+                    "application/pdf",
+                    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                    "application/msword",
+                    "text/plain"
+                ]
+                
+                if file_type not in allowed_types:
+                    # Check by extension as fallback
+                    ext = os.path.splitext(filename)[1].lower()
+                    if ext == ".pdf":
+                        file_type = "application/pdf"
+                    elif ext in [".docx", ".doc"]:
+                        file_type = "application/vnd.openxmlformats-officedocument.wordprocessingml.document" if ext == ".docx" else "application/msword"
+                    elif ext == ".txt":
+                        file_type = "text/plain"
+                    else:
+                        self.send_error(400, f"Unsupported file type. Please upload PDF (.pdf), Word (.docx, .doc), or Text (.txt) files.")
+                        return
+                
+                # Check file size (limit to 10MB)
+                max_size = 10 * 1024 * 1024  # 10MB
+                if len(file_content) > max_size:
+                    self.send_error(400, f"File too large. Maximum size is 10MB. Your file is {len(file_content) / 1024 / 1024:.2f}MB.")
+                    return
+                
+                success, message = add_file_to_vectorstore(file_content, filename, file_type)
+                
+                payload = {"success": success, "message": message}
+                blob = json.dumps(payload).encode("utf-8")
+                
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json")
+                self.send_header("Content-Length", str(len(blob)))
+                self.send_header("Access-Control-Allow-Origin", "*")
+                self.end_headers()
+                self.wfile.write(blob)
+            except Exception as e:
+                msg = json.dumps({"success": False, "message": f"Error: {str(e)}"}).encode("utf-8")
+                self.send_response(500)
+                self.send_header("Content-Type", "application/json")
+                self.send_header("Content-Length", str(len(msg)))
+                self.send_header("Access-Control-Allow-Origin", "*")
+                self.end_headers()
+                self.wfile.write(msg)
             return
+        
+        if path != "/ask":
+            self.send_error(404, f"Not Found: {path}")
+            return
+        
+        # Handle /ask endpoint
         try:
             length = int(self.headers.get("Content-Length", "0"))
             body = self.rfile.read(length).decode("utf-8")
@@ -545,7 +1056,7 @@ class Handler(SimpleHTTPRequestHandler):
             self.wfile.write(msg)
 
     def do_OPTIONS(self):
-        if self.path in ["/ask", "/add-url"]:
+        if self.path in ["/ask", "/add-url", "/hr-agent", "/upload-file"]:
             self.send_response(204)
             self.send_header("Access-Control-Allow-Origin", "*")
             self.send_header("Access-Control-Allow-Methods", "POST, OPTIONS")

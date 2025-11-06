@@ -1,16 +1,18 @@
-RAGIFY — Local RAG Chatbot with Ollama
-RAGIFY is a simple Retrieval-Augmented Generation chatbot that runs locally using Ollama and an LLM (default: Mistral 7B). It fetches content from the web, chunks and embeds it, stores vectors in ChromaDB, and answers questions through a tiny HTTP server with a minimal HTML/JS UI.
+RAGIFY — Cloud-Ready RAG Chatbot with Multiple LLM Providers
+RAGIFY is a Retrieval-Augmented Generation chatbot designed for Azure Web Apps deployment. It supports multiple LLM providers (OpenAI GPT, Google Gemini) via APIs, eliminating the need for local LLM hosting. It fetches content from the web, chunks and embeds it, stores vectors in ChromaDB, and answers questions through a lightweight HTTP server with a minimal HTML/JS UI.
 
 Features
-Local inference via Ollama; default model is mistral:7b.​
+Multiple LLM provider support: OpenAI GPT and Google Gemini via APIs.​
 
-WebBaseLoader to crawl a seed URL (configurable).​
+WebBaseLoader to crawl seed URLs (configurable).​
 
 Smarter chunking options with semantic/markdown/recursive strategies.​
 
-Persistent vector store using Chroma in chroma_db/ (ignored by Git).​
+Persistent vector store using Chroma in chroma_db/ (persisted in Azure).​
 
 Lightweight server in Python; simple frontend (index.html + app.js + styles.css).​
+
+Azure Web App ready with Docker support.​
 
 Project Structure
 main.py — Python server and RAG pipeline.​
@@ -26,11 +28,13 @@ requirements.txt — Python dependencies.​
 Prerequisites
 Python 3.10+ with venv.​
 
-Ollama installed and running locally.​
-
-Model pulled in Ollama: mistral:7b or mistral:latest.​
+API key for your chosen LLM provider:
+- OpenAI API key (for GPT models)
+- Google API key (for Gemini models)​
 
 Quick Start
+
+Local Development
 Create and activate a virtual environment
 
 python3 -m venv .venv
@@ -43,29 +47,81 @@ Install Python dependencies
 
 pip install -r requirements.txt​
 
-Start Ollama and pull a model
+Configure environment variables
 
-ollama serve
+For OpenAI:
+```bash
+export LLM_PROVIDER=openai
+export OPENAI_API_KEY=your-openai-api-key
+export OPENAI_MODEL=gpt-3.5-turbo  # optional, default is gpt-3.5-turbo
+```
 
-ollama pull mistral:7b # or mistral:latest
+For Google Gemini:
+```bash
+export LLM_PROVIDER=gemini
+export GOOGLE_API_KEY=your-google-api-key
+export GEMINI_MODEL=gemini-pro  # optional, default is gemini-pro
+```
 
-curl http://127.0.0.1:11434/api/tags # verify model appears​
-
-Configure environment (optional)
-
-export OLLAMA_BASE=http://127.0.0.1:11434
-
-export OLLAMA_MODEL=mistral:7b
-
-export USER_AGENT="RAGBot/1.0 (+contact@example.com)"
-
-export CHUNKING_STRATEGY=semantic # semantic|markdown|recursive ​
+Optional settings:
+```bash
+export TEMPERATURE=0.1  # default 0.1
+export CHUNKING_STRATEGY=semantic  # semantic|markdown|recursive
+export CHROMA_DIR=chroma_db  # default chroma_db
+export PORT=8000  # default 8000
+export HOST=0.0.0.0  # default 0.0.0.0
+```
 
 Run the app
 
 python3 main.py
 
-Open index.html in a browser (or serve statically) and chat.​
+Open http://localhost:8000 in your browser.​
+
+Azure Web App Deployment
+
+Option 1: Using Docker
+Build and push to Azure Container Registry:
+```bash
+docker build -t ragify:latest .
+# Tag and push to your Azure Container Registry
+az acr login --name <your-acr-name>
+docker tag ragify:latest <your-acr-name>.azurecr.io/ragify:latest
+docker push <your-acr-name>.azurecr.io/ragify:latest
+```
+
+Create Azure Web App:
+```bash
+az webapp create --resource-group <your-rg> --plan <your-plan> --name <your-app-name> --deployment-container-image-name <your-acr-name>.azurecr.io/ragify:latest
+```
+
+Configure environment variables in Azure Portal or CLI:
+```bash
+az webapp config appsettings set --resource-group <your-rg> --name <your-app-name> --settings \
+  LLM_PROVIDER=openai \
+  OPENAI_API_KEY=<your-key> \
+  OPENAI_MODEL=gpt-3.5-turbo \
+  CHUNKING_STRATEGY=semantic \
+  PORT=8000 \
+  HOST=0.0.0.0
+```
+
+Option 2: Direct Deployment
+Use Azure Web App's built-in Python support:
+1. Push code to GitHub
+2. Connect Azure Web App to your GitHub repository
+3. Set environment variables in Azure Portal
+4. Deploy
+
+Important: Set environment variables in Azure Portal:
+- `LLM_PROVIDER`: `openai` or `gemini`
+- `OPENAI_API_KEY` or `GOOGLE_API_KEY` (depending on provider)
+- `OPENAI_MODEL` or `GEMINI_MODEL` (optional)
+- `TEMPERATURE` (optional, default 0.1)
+- `CHUNKING_STRATEGY` (optional, default semantic)
+- `CHROMA_DIR` (optional, default chroma_db)
+- `PORT` (optional, default 8000)
+- `HOST` (optional, default 0.0.0.0)
 
 How It Works
 Load data
@@ -92,16 +148,24 @@ Retrieve and generate
 
 Similarity search retrieves top-k chunks; prompt + Ollama LLM produce final answer.​
 
-Switching Models
-Pull the model in Ollama:
+Switching LLM Providers
+To switch between providers, simply change the `LLM_PROVIDER` environment variable:
 
-ollama pull mistral:7b
+For OpenAI:
+```bash
+export LLM_PROVIDER=openai
+export OPENAI_API_KEY=your-key
+export OPENAI_MODEL=gpt-4  # or gpt-3.5-turbo, gpt-4-turbo-preview, etc.
+```
 
-Set env var:
+For Gemini:
+```bash
+export LLM_PROVIDER=gemini
+export GOOGLE_API_KEY=your-key
+export GEMINI_MODEL=gemini-pro  # or gemini-1.5-pro, etc.
+```
 
-export OLLAMA_MODEL=mistral:7b
-
-Restart main.py.​
+Restart the application after changing providers.​
 
 Knowledge Graph (Optional: LangGraph)
 Add a graph agent step for entity extraction and KG lookups:
@@ -113,30 +177,34 @@ Create a graph with nodes: entity_extractor → retriever → generator.
 Use NetworkX or Neo4j for a persistent KG, and wire a retriever node to query it. See LangGraph tutorials for RAG/agentic flows.​
 
 Environment Variables
-OLLAMA_BASE: Ollama server URL, default http://127.0.0.1:11434.​
 
-OLLAMA_MODEL: e.g., mistral:7b.​
+Required (based on provider):
+- `LLM_PROVIDER`: `openai` or `gemini` (default: `openai`)
+- `OPENAI_API_KEY`: Required if using OpenAI
+- `GOOGLE_API_KEY`: Required if using Gemini
 
-USER_AGENT: passed to the web loader.​
-
-CHROMA_DIR: path of the Chroma persistence directory (default chroma_db).​
-
-CHUNKING_STRATEGY: semantic|markdown|recursive. ​
+Optional:
+- `OPENAI_MODEL`: OpenAI model name (default: `gpt-3.5-turbo`)
+- `GEMINI_MODEL`: Gemini model name (default: `gemini-pro`)
+- `TEMPERATURE`: LLM temperature (default: `0.1`)
+- `USER_AGENT`: User agent string for web loader (default: RAGBot/1.0)
+- `CHROMA_DIR`: Chroma persistence directory (default: `chroma_db`)
+- `CHUNKING_STRATEGY`: `semantic|markdown|recursive` (default: `semantic`)
+- `PORT`: Server port (default: `8000`)
+- `HOST`: Server host (default: `0.0.0.0`)
 
 Development Tips
-If Ollama port is in use, kill the other process or change the port and OLLAMA_BASE.​
+Always keep API keys secure. Never commit them to version control. Use environment variables or Azure Key Vault in production.​
 
 Avoid committing heavy/generated files:
 
 .venv/, chroma_db/, pycache/, *.pyc, .DS_Store, .env — already in .gitignore.​
 
-If Git rejects pushes due to >100 MB:
+For Azure deployment, consider using Azure Key Vault for storing API keys securely.​
 
-git rm -r --cached .venv chroma_db
+The ChromaDB persistence directory (`chroma_db/`) will be persisted in Azure Web App's storage. For production, consider using Azure Blob Storage or a dedicated database.​
 
-git commit -m "Remove local artifacts"
-
-git push​
+Cost optimization: Use GPT-3.5-turbo for lower costs, or Gemini Pro for free tier usage. Monitor API usage in Azure Portal.​
 
 Roadmap
 Add LangGraph-based entity graph for better disambiguation.​
@@ -149,8 +217,10 @@ License
 Choose a license (e.g., MIT) and add LICENSE.​
 
 Acknowledgments
-LangChain + LangGraph for orchestration.​
+LangChain for orchestration.​
 
 ChromaDB for vector storage.​
 
-Ollama for local LLM serving.
+OpenAI and Google for LLM APIs.​
+
+Azure for cloud hosting platform.

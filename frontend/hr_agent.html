@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Ragify HR Agent</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="container">
+    <div class="page-header">
+      <a href="/" class="back-link">← Back to Home</a>
+      <h1>👔 Ragify HR Agent</h1>
+      <p class="page-subtitle">AI-powered HR workflows powered by LangGraph</p>
+    </div>
+
+    <div class="hr-services">
+      <div class="hr-service-card" id="leave-card">
+        <div class="hr-icon">📅</div>
+        <h2>Leave Management</h2>
+        <p>Request leaves, check balance, view leave history</p>
+        <button class="hr-btn" onclick="openService('leave')">Manage Leaves</button>
+      </div>
+
+      <div class="hr-service-card" id="payroll-card">
+        <div class="hr-icon">💰</div>
+        <h2>Payroll Management</h2>
+        <p>View payslips, tax information, salary details</p>
+        <button class="hr-btn" onclick="openService('payroll')">View Payroll</button>
+      </div>
+
+      <div class="hr-service-card" id="recruitment-card">
+        <div class="hr-icon">🎯</div>
+        <h2>Recruitment Management</h2>
+        <p>Post jobs, review applications, schedule interviews</p>
+        <button class="hr-btn" onclick="openService('recruitment')">Manage Recruitment</button>
+      </div>
+    </div>
+
+    <div id="hr-chat-section" style="display: none;" class="hr-chat-container">
+      <div class="hr-chat-header">
+        <h3 id="chat-title">HR Assistant</h3>
+        <button class="close-btn" onclick="closeService()">✕</button>
+      </div>
+      <div id="hr-chat-messages" class="hr-chat-messages"></div>
+      <form id="hr-chat-form" class="hr-chat-form">
+        <input type="text" id="hr-message-input" placeholder="Type your message..." required />
+        <button type="submit" id="hr-send-btn">Send</button>
+      </form>
+    </div>
+  </main>
+  <script src="hr_agent.js"></script>
+</body>
+</html>
+

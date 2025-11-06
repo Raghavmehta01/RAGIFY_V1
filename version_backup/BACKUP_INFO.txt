@@ -1,0 +1,23 @@
+Version: v1_stable
+Date: $(date)
+Description: Stable working version before deployment changes
+
+Features included:
+- Multi-model support (Gemini, Groq, OpenAI)
+- Dynamic URL addition feature
+- Automatic vector store updates
+- URL tracking system
+- Insufficient answer detection
+- UI with model selector
+
+Files backed up:
+- main.py (complete RAG application)
+- index.html (UI with URL input)
+- app.js (JavaScript with URL handling)
+- styles.css (styling)
+- requirements.txt (dependencies)
+- .env (API keys and config)
+
+To restore:
+1. Copy files back to project root
+2. Restart the server
