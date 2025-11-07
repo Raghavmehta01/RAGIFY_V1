@@ -16,7 +16,7 @@ def create_handler_class(
     OPENAI_API_KEY, GOOGLE_API_KEY, GROQ_API_KEY, TEMPERATURE,
     add_url_to_vectorstore, add_file_to_vectorstore, format_docs,
     enhance_query_for_retrieval, rerank_documents,
-    build_dynamic_prompt, build_notebooklm_style_prompt,
+    build_dynamic_prompt, build_notebooklm_style_prompt, estimate_answer_length,
     retriever_getter, vectorstore_getter, HAS_RERANKER, reranker_getter,
     create_hr_agent_graph, simple_hr_agent, HAS_LANGGRAPH
 ):
@@ -467,12 +467,17 @@ def create_handler_class(
                 # - Uses NotebookLM-style prompts for comprehensive, insightful answers
                 # - Falls back to format-specific prompts when format is explicitly requested
                 # - Provides interest-driven insights and source attribution
+                # Estimate answer length based on question complexity
+                estimated_length = estimate_answer_length(q, wants_explicit_detail, wants_brief, detected_format)
+                min_words, max_words, desc = estimated_length
+                print(f"   📏 Estimated answer length: {min_words}-{max_words} words ({desc})")
+                
                 # ===== DYNAMIC PROMPT SELECTION =====
                 # Use NotebookLM-style prompts by default for better quality
                 # Use format-specific prompts only when format is explicitly requested
                 if detected_format:
                     # Use dynamic prompt builder for detected format (table, list, etc.)
-                    enhanced_prompt = build_dynamic_prompt(detected_format, content_type_hints, wants_explicit_detail, wants_brief)
+                    enhanced_prompt = build_dynamic_prompt(detected_format, content_type_hints, wants_explicit_detail, wants_brief, estimated_length)
                     print(f"   📝 Using dynamic prompt for format: {detected_format}")
                 elif wants_explicit_detail and not wants_brief:
                     # Use the aggressive 500+ words prompt ONLY when explicitly requested
@@ -485,15 +490,38 @@ def create_handler_class(
     - **Purpose**: Provide context, insights, and information about PayPlus 360 application restructuring
     - **Use Cases**: Summarization, specific inquiries, context awareness, introductions based on documents, meetings, and conversations
 
-    Answer the question using ONLY the information from the Context below. If the context is insufficient, reply exactly: "I don't know based on the provided information."
+    # Important: Scope Limitation
+    - You should ONLY answer questions related to PayPlus 360, its restructuring, the ODT team, or information provided in the context.
+    - If the question is unrelated to PayPlus 360, out of context, or about topics not covered in the provided context, reply exactly: "I don't know based on the provided information."
+    - Do not answer general knowledge questions, questions about other applications, or any questions that are not directly related to PayPlus 360 or the ODT team's work.
+
+    # Answer Quality Guidelines
+    - **Be Comprehensive**: Cover all aspects of the question thoroughly, but avoid unnecessary repetition
+    - **Be Precise**: Use specific details, examples, and information from the context
+    - **Be Structured**: Organize your answer logically with clear sections and transitions
+    - **Be Concise**: Avoid repeating the same information multiple times - each point should be made once, clearly
+    - **Be Contextual**: Connect information from different parts of the context when relevant
+    - **Be Original**: Do not repeat phrases, sentences, or entire paragraphs - vary your language and structure
+
+    # Anti-Repetition Rules
+    - **No Redundancy**: Once you've explained a concept, do not explain it again in the same way
+    - **No Repetitive Answers**: Make sure there are no repetitive answers in the response. If something is mentioned once in a given context, it should NOT be repeated. Each piece of information should appear only once in your answer.
+    - **Single Mention Rule**: If a fact, detail, or concept is mentioned once in the context, mention it only once in your answer. Do not repeat the same information in different parts of your response.
+    - **Varied Language**: Use different words and phrases to express similar ideas
+    - **Progressive Detail**: Build on information rather than restating it
+    - **Unique Examples**: Use different examples to illustrate points - don't reuse the same example
+    - **Fresh Perspectives**: Approach the same topic from different angles if you need to revisit it
+
+    Answer the question using ONLY the information from the Context below. If the context is insufficient or the question is unrelated to PayPlus 360, reply exactly: "I don't know based on the provided information."
 
     🚨🚨🚨 CRITICAL: The user explicitly requested DETAILED/EXPANDED information. Your response MUST be at least 500 words. This is NOT optional - it is a MANDATORY REQUIREMENT.
 
     MANDATORY REQUIREMENTS:
-    1. Your answer MUST be 500+ words - count your words and ensure you meet this minimum
+    1. Your answer MUST be 500-800 words - adjust based on question complexity
     2. Write ONLY in full paragraphs (4-6 sentences each) - NO bullet points, NO lists, NO short phrases
     3. Expand extensively on EVERY single point, topic, and detail from the context
     4. Include ALL relevant details, context, background, nuances, implications, and examples
+    5. Avoid repetition - make each sentence add unique value
 
     WRITING STYLE:
     - Use well-structured paragraphs with proper transitions
@@ -501,8 +529,9 @@ def create_handler_class(
     - Connect ideas with transition words (Furthermore, Additionally, Moreover, etc.)
     - Include specific examples, quotes, and detailed explanations from the context
     - Do NOT summarize - EXPAND and ELABORATE on everything
+    - Vary your language - do not repeat the same phrases or sentences
 
-    Your goal is to provide a complete, extensive, well-structured answer that fully addresses the question using ALL relevant information from the context. Every topic mentioned should be explained in detail with full context.
+    Your goal is to provide a complete, extensive, well-structured answer that fully addresses the question using ALL relevant information from the context. Every topic mentioned should be explained in detail with full context. Avoid repeating the same information - make each sentence add unique value.
 
     Context:
     {context}
@@ -523,9 +552,20 @@ def create_handler_class(
     - **Application**: PayPlus 360 (hiring/recruitment tool being restructured)
     - **Purpose**: Provide context, insights, and information about PayPlus 360 application restructuring
 
-    Answer the question using ONLY the information from the Context below. If the context is insufficient, reply exactly: "I don't know based on the provided information."
+    # Important: Scope Limitation
+    - You should ONLY answer questions related to PayPlus 360, its restructuring, the ODT team, or information provided in the context.
+    - If the question is unrelated to PayPlus 360, out of context, or about topics not covered in the provided context, reply exactly: "I don't know based on the provided information."
+    - Do not answer general knowledge questions, questions about other applications, or any questions that are not directly related to PayPlus 360 or the ODT team's work.
 
-    Provide a brief, concise answer (2-3 sentences maximum).
+    # Answer Quality Guidelines
+    - **Be Precise**: Use specific details from the context
+    - **Be Concise**: Provide only essential information
+    - **Be Original**: Avoid repetition - make each word count
+    - **No Repetitive Answers**: Make sure there are no repetitive answers in the response. If something is mentioned once in a given context, it should NOT be repeated. Each piece of information should appear only once in your answer.
+
+    Answer the question using ONLY the information from the Context below. If the context is insufficient or the question is unrelated to PayPlus 360, reply exactly: "I don't know based on the provided information."
+
+    Provide a brief, concise answer (20-50 words or 2-3 sentences maximum). Avoid repetition. If something is mentioned once, do not repeat it.
 
     Context:
     {context}
@@ -546,7 +586,7 @@ def create_handler_class(
                     elif any(word in question_lower_style for word in ["research", "study", "evidence", "methodology", "hypothesis"]):
                         style = "researcher"
                 
-                    enhanced_prompt = build_notebooklm_style_prompt(style, content_type_hints, wants_explicit_detail, wants_brief)
+                    enhanced_prompt = build_notebooklm_style_prompt(style, content_type_hints, wants_explicit_detail, wants_brief, estimated_length)
                     print(f"   📝 Using NotebookLM-style prompt (style: {style})")
             
                 # Create dynamic RAG chain with selected LLM

@@ -39,8 +39,63 @@ button { appearance: none; border: 1px solid var(--border); border-radius: 10px;
   max-height: 80vh;
   overflow-y: auto;
   font-size: 15px;
-  line-height: 1.8;
+  line-height: 1.4;
   word-wrap: break-word;
+}
+
+#result p {
+  margin: 0 0 8px 0;
+  line-height: 1.4;
+}
+
+#result p:last-child {
+  margin-bottom: 0;
+}
+
+#result h1, #result h2, #result h3 {
+  margin: 12px 0 8px 0;
+  line-height: 1.3;
+}
+
+#result h1:first-child, #result h2:first-child, #result h3:first-child {
+  margin-top: 0;
+}
+
+#result ul, #result ol {
+  margin: 8px 0;
+  padding-left: 24px;
+  line-height: 1.4;
+}
+
+#result li {
+  margin: 4px 0;
+  line-height: 1.4;
+}
+
+#result br {
+  line-height: 1.4;
+}
+
+#result code {
+  padding: 2px 6px;
+  background: var(--chip);
+  border-radius: 4px;
+  font-size: 0.9em;
+  line-height: 1.4;
+}
+
+#result pre {
+  margin: 8px 0;
+  padding: 12px;
+  background: var(--chip);
+  border-radius: 8px;
+  overflow-x: auto;
+  line-height: 1.4;
+}
+
+#result pre code {
+  padding: 0;
+  background: transparent;
 }
 .success { color: var(--success); }
 .error { color: var(--error); }
