@@ -749,7 +749,44 @@ def add_url_to_vectorstore(url):
 # - Added comprehensive project information extraction (tech stack, team, clients, rules)
 # - Improved output formatting with structured sections and tables
 # - Added multi-project handling capabilities
-def build_dynamic_prompt(format_type, content_type_hints, wants_explicit_detail, wants_brief):
+def estimate_answer_length(question, wants_explicit_detail, wants_brief, detected_format=None):
+    """
+    Estimate appropriate answer length based on question complexity and user intent.
+    Returns: (min_words, max_words, description)
+    """
+    question_lower = question.lower()
+    question_length = len(question.split())
+    
+    # Very brief questions or explicit brief requests
+    if wants_brief or question_length <= 3:
+        return (20, 50, "brief")
+    
+    # Explicit detail requests
+    if wants_explicit_detail:
+        return (500, 800, "comprehensive")
+    
+    # Complex questions (multiple parts, comparisons, lists)
+    has_multiple_parts = any(word in question_lower for word in ["and", "also", "what are", "list", "compare", "difference"])
+    has_question_words = sum(1 for word in ["what", "how", "why", "when", "where", "who", "which"] if word in question_lower)
+    
+    # Very complex questions (multiple aspects)
+    if has_multiple_parts and question_length > 15:
+        return (400, 600, "detailed")
+    
+    # Comparison or analysis questions
+    if detected_format in ["comparison", "step_by_step"] or any(word in question_lower for word in ["compare", "analyze", "explain", "describe"]):
+        return (300, 500, "detailed")
+    
+    # Simple factual questions
+    if question_length <= 8 and has_question_words <= 1:
+        return (150, 300, "moderate")
+    
+    # Default for normal questions
+    return (250, 450, "moderate-detailed")
+
+# - Improved output formatting with structured sections and tables
+# - Added multi-project handling capabilities
+def build_dynamic_prompt(format_type, content_type_hints, wants_explicit_detail, wants_brief, estimated_length=None):
     """Build a prompt template based on detected format preferences and content type"""
     
     # Changes made by Raghav Mehta with current timestamp: 2025-11-07 13:52:27
@@ -766,7 +803,29 @@ def build_dynamic_prompt(format_type, content_type_hints, wants_explicit_detail,
 - **Purpose**: Provide context, insights, and information about PayPlus 360 application restructuring using meeting discussions
 - **Use Cases**: Summarization, specific inquiries, context awareness, introductions based on documents, meetings, and conversations
 
-Answer the question using ONLY the information from the Context below. If the context is insufficient, reply exactly: "I don't know based on the provided information."
+# Important: Scope Limitation
+- You should ONLY answer questions related to PayPlus 360, its restructuring, the ODT team, or information provided in the context.
+- If the question is unrelated to PayPlus 360, out of context, or about topics not covered in the provided context, reply exactly: "I don't know based on the provided information."
+- Do not answer general knowledge questions, questions about other applications, or any questions that are not directly related to PayPlus 360 or the ODT team's work.
+
+# Answer Quality Guidelines
+- **Be Comprehensive**: Cover all aspects of the question thoroughly, but avoid unnecessary repetition
+- **Be Precise**: Use specific details, examples, and information from the context
+- **Be Structured**: Organize your answer logically with clear sections and transitions
+- **Be Concise**: Avoid repeating the same information multiple times - each point should be made once, clearly
+- **Be Contextual**: Connect information from different parts of the context when relevant
+- **Be Original**: Do not repeat phrases, sentences, or entire paragraphs - vary your language and structure
+
+# Anti-Repetition Rules
+- **No Redundancy**: Once you've explained a concept, do not explain it again in the same way
+- **No Repetitive Answers**: Make sure there are no repetitive answers in the response. If something is mentioned once in a given context, it should NOT be repeated. Each piece of information should appear only once in your answer.
+- **Varied Language**: Use different words and phrases to express similar ideas
+- **Progressive Detail**: Build on information rather than restating it
+- **Unique Examples**: Use different examples to illustrate points - don't reuse the same example
+- **Fresh Perspectives**: Approach the same topic from different angles if you need to revisit it
+- **Single Mention Rule**: If a fact, detail, or concept is mentioned once in the context, mention it only once in your answer. Do not repeat the same information in different parts of your response.
+
+Answer the question using ONLY the information from the Context below. If the context is insufficient or the question is unrelated to PayPlus 360, reply exactly: "I don't know based on the provided information."
 
 """
     
@@ -937,34 +996,49 @@ MULTI-PROJECT HANDLING:
 
 """
     
-    # Length guidance
-    if wants_explicit_detail and not wants_brief:
+    # Length guidance based on estimation or defaults
+    if estimated_length:
+        min_words, max_words, desc = estimated_length
+        length_guidance = f"""LENGTH REQUIREMENTS:
+- Target answer length: {min_words}-{max_words} words ({desc})
+- Adjust length based on question complexity - simple questions need fewer words, complex questions need more
+- Ensure every word adds value - avoid filler content or repetition
+- If the question is simple, aim for the lower end; if complex, aim for the higher end
+- Quality over quantity: better to be concise and informative than verbose and repetitive
+
+"""
+    elif wants_explicit_detail and not wants_brief:
         length_guidance = """LENGTH REQUIREMENTS:
-- Provide a comprehensive answer (500+ words minimum)
+- Provide a comprehensive answer (500-800 words)
 - Expand on every point with full context
 - Include all relevant details, examples, and explanations
-- Be thorough and complete
+- Be thorough and complete, but avoid repeating the same information
 
 """
     elif not wants_brief:
         # Normal detailed answer (not explicit, not brief)
         length_guidance = """LENGTH REQUIREMENTS:
-- Provide a detailed answer (300-500 words)
+- Provide a detailed answer (250-450 words)
+- Adjust based on question complexity: simple questions (150-300 words), complex questions (300-500 words)
 - Include sufficient context and explanations
 - Balance comprehensiveness with readability
+- Avoid unnecessary repetition - make each sentence count
 
 """
     elif wants_brief:
         length_guidance = """LENGTH REQUIREMENTS:
-- Keep the answer concise (2-3 sentences or brief format)
+- Keep the answer concise (20-50 words or 2-3 sentences)
 - Focus on essential information only
+- Be direct and to the point
 
 """
     else:
         length_guidance = """LENGTH REQUIREMENTS:
-- Provide a detailed answer (300-500 words)
+- Provide a detailed answer (250-450 words)
+- Adjust based on question complexity
 - Include sufficient context and explanations
 - Balance comprehensiveness with readability
+- Avoid repetition
 
 """
     
@@ -1033,9 +1107,39 @@ prompt = ChatPromptTemplate.from_template(
 - **Purpose**: Provide context, insights, and information about PayPlus 360 application restructuring
 - **Use Cases**: Summarization, specific inquiries, context awareness, introductions based on documents, meetings, and conversations
 
-Answer the question using ONLY the information from the Context below. If the context is insufficient, reply exactly: "I don't know based on the provided information."
+# Important: Scope Limitation
+- You should ONLY answer questions related to PayPlus 360, its restructuring, the ODT team, or information provided in the context.
+- If the question is unrelated to PayPlus 360, out of context, or about topics not covered in the provided context, reply exactly: "I don't know based on the provided information."
+- Do not answer general knowledge questions, questions about other applications, or any questions that are not directly related to PayPlus 360 or the ODT team's work.
 
-Your goal is to provide a complete, well-structured answer that fully addresses the question using all relevant information from the context. Structure your response with clear paragraphs that explain concepts thoroughly and include all relevant details, examples, and nuances from the provided context, especially as they relate to PayPlus 360 and its restructuring.
+# Answer Quality Guidelines
+- **Be Comprehensive**: Cover all aspects of the question thoroughly, ensuring no important information is missed
+- **Be Precise**: Use specific details, examples, numbers, and concrete information from the context
+- **Be Structured**: Organize your answer logically with clear paragraphs, sections, and smooth transitions
+- **Be Contextual**: Connect related information from different parts of the context to provide a complete picture
+- **Be Insightful**: Go beyond simple facts - explain implications, relationships, and significance
+- **Be Concise**: Avoid unnecessary repetition - each point should be made once, clearly and effectively
+- **Be Original**: Vary your language and sentence structure - do not repeat phrases or entire paragraphs
+
+# Anti-Repetition Rules
+- **No Redundancy**: Once you've explained a concept, do not explain it again in the same way elsewhere in your answer
+- **No Repetitive Answers**: Make sure there are no repetitive answers in the response. If something is mentioned once in a given context, it should NOT be repeated. Each piece of information should appear only once in your answer.
+- **Single Mention Rule**: If a fact, detail, or concept is mentioned once in the context, mention it only once in your answer. Do not repeat the same information in different parts of your response.
+- **Varied Expression**: Use different words, phrases, and sentence structures to express similar ideas
+- **Progressive Information**: Build on information rather than restating it - add new details or perspectives
+- **Unique Examples**: Use different examples to illustrate points - don't reuse the same example multiple times
+- **Fresh Angles**: If you need to revisit a topic, approach it from a different angle or add new information
+- **Efficient Communication**: Make every sentence count - eliminate filler and redundant statements
+
+# Answer Length Guidelines
+- **Adapt to Question Complexity**: Simple questions need concise answers (150-300 words), complex questions need detailed answers (300-500 words)
+- **Quality Over Quantity**: Better to be concise and informative than verbose and repetitive
+- **Comprehensive Coverage**: Ensure all aspects of the question are addressed, but without unnecessary repetition
+- **Natural Flow**: Let the answer length emerge naturally from the content needed to fully address the question
+
+Answer the question using ONLY the information from the Context below. If the context is insufficient or the question is unrelated to PayPlus 360, reply exactly: "I don't know based on the provided information."
+
+Your goal is to provide a complete, well-structured answer that fully addresses the question using all relevant information from the context. Structure your response with clear paragraphs that explain concepts thoroughly and include all relevant details, examples, and nuances from the provided context, especially as they relate to PayPlus 360 and its restructuring. Avoid repeating the same information - make each sentence add unique value.
 
 Context:
 {context}
@@ -1154,7 +1258,7 @@ def rerank_documents(query, documents, top_k=None):
 # - Includes style modes: Analyst, Guide, Researcher, Default
 # - Features source attribution, structured answers, and context-aware depth
 # - Provides comprehensive, insightful answers similar to NotebookLM
-def build_notebooklm_style_prompt(style="default", content_type_hints=None, wants_explicit_detail=False, wants_brief=False):
+def build_notebooklm_style_prompt(style="default", content_type_hints=None, wants_explicit_detail=False, wants_brief=False, estimated_length=None):
     """Build NotebookLM-inspired prompt with style customization and interest-driven insights"""
     
     # Changes made by Raghav Mehta with current timestamp: 2025-11-07 13:35:32
@@ -1176,11 +1280,27 @@ def build_notebooklm_style_prompt(style="default", content_type_hints=None, want
   - Context awareness for team members working on the restructuring
   - Providing introductions and overviews of the application and its components
 
+# Important: Scope Limitation
+- You should ONLY answer questions related to PayPlus 360, its restructuring, the ODT team, or information provided in the context.
+- If the question is unrelated to PayPlus 360, out of context, or about topics not covered in the provided context, reply exactly: "I don't know based on the provided information."
+- Do not answer general knowledge questions, questions about other applications, or any questions that are not directly related to PayPlus 360 or the ODT team's work.
+
 # Core Principles
 1. **Source-Grounded**: Base your answer ONLY on the provided context. If information isn't in the sources, state: "Based on the provided sources, I cannot find information about [specific aspect]."
 2. **Interest-Driven**: Highlight surprising, counterintuitive, or particularly interesting insights from the sources, especially those relevant to the PayPlus 360 restructuring.
 3. **Structured Clarity**: Organize information clearly with definitions, examples, and concrete applications related to PayPlus 360.
 4. **Context-Aware**: Adapt your explanation depth based on the question's complexity and apparent user expertise level. Remember you're helping ODT team members understand their own project.
+5. **Non-Repetitive**: Avoid repeating the same information, phrases, or examples. Each sentence should add unique value and new information or perspective.
+6. **Adaptive Length**: Adjust answer length based on question complexity - simple questions need concise answers, complex questions need detailed explanations.
+
+# Anti-Repetition Guidelines
+- **Unique Content**: Every sentence should contribute new information or a new perspective
+- **No Repetitive Answers**: Make sure there are no repetitive answers in the response. If something is mentioned once in a given context, it should NOT be repeated. Each piece of information should appear only once in your answer.
+- **Single Mention Rule**: If a fact, detail, or concept is mentioned once in the context, mention it only once in your answer. Do not repeat the same information in different parts of your response.
+- **Varied Language**: Use different words, phrases, and sentence structures throughout
+- **Progressive Detail**: Build on previous information rather than restating it
+- **Diverse Examples**: Use different examples to illustrate various points
+- **Efficient Communication**: Eliminate redundant statements and filler content
 
 """
     
@@ -1242,26 +1362,38 @@ def build_notebooklm_style_prompt(style="default", content_type_hints=None, want
 
 """
     
-    # Length guidance based on user intent
-    if wants_explicit_detail and not wants_brief:
+    # Length guidance based on user intent and estimation
+    if estimated_length:
+        min_words, max_words, desc = estimated_length
+        length_guidance = f"""# Length Requirements
+- Target answer length: {min_words}-{max_words} words ({desc})
+- Adjust based on question complexity - simple questions need fewer words, complex questions need more
+- Ensure every word adds value - avoid filler content or repetition
+- Quality over quantity: better to be concise and informative than verbose and repetitive
+
+"""
+    elif wants_explicit_detail and not wants_brief:
         length_guidance = """# Length Requirements
-- Provide comprehensive answer (500+ words minimum)
+- Provide comprehensive answer (500-800 words)
 - Expand extensively on every point with full context
 - Include all relevant details, examples, and explanations
-- Be thorough and complete
+- Be thorough and complete, but avoid repeating the same information
 
 """
     elif wants_brief:
         length_guidance = """# Length Requirements
-- Keep answer concise (2-3 sentences or brief format)
+- Keep answer concise (20-50 words or 2-3 sentences)
 - Focus on essential information only
+- Be direct and to the point
 
 """
     else:
         length_guidance = """# Length Requirements
-- Provide detailed answer (300-500 words)
+- Provide detailed answer (250-450 words)
+- Adjust based on question complexity: simple questions (150-300 words), complex questions (300-500 words)
 - Include sufficient context and explanations
 - Balance comprehensiveness with readability
+- Avoid unnecessary repetition
 
 """
     
@@ -1301,13 +1433,30 @@ Your answer should follow this structure:
 - **Be Insightful**: Don't just summarize—synthesize and highlight what's most valuable
 - **Be Precise**: Use specific details, numbers, and examples from the sources
 - **Be Clear**: Use simple language for complex concepts, but don't oversimplify
-- **Be Comprehensive**: Cover all relevant aspects of the question
+- **Be Comprehensive**: Cover all relevant aspects of the question without repetition
 - **Be Honest**: Acknowledge gaps in the sources when they exist
+- **Be Original**: Vary your language and structure - avoid repeating phrases or entire paragraphs
+- **Be Efficient**: Make every sentence count - eliminate redundant statements
+
+# Anti-Repetition Rules
+- **No Redundancy**: Once you've explained a concept, do not explain it again in the same way
+- **No Repetitive Answers**: Make sure there are no repetitive answers in the response. If something is mentioned once in a given context, it should NOT be repeated. Each piece of information should appear only once in your answer.
+- **Single Mention Rule**: If a fact, detail, or concept is mentioned once in the context, mention it only once in your answer. Do not repeat the same information in different parts of your response.
+- **Varied Expression**: Use different words, phrases, and sentence structures throughout
+- **Progressive Information**: Build on information rather than restating it
+- **Unique Examples**: Use different examples to illustrate various points
+- **Fresh Perspectives**: Approach topics from different angles if revisiting them
 
 # Style Adaptation
 - If the question suggests expertise: Provide deeper technical details
 - If the question suggests learning: Provide more foundational explanations
 - If the question suggests application: Focus on practical uses and examples
+
+# Length Adaptation
+- Simple questions (single concept, factual): 150-300 words
+- Moderate questions (multiple aspects, explanations): 250-450 words
+- Complex questions (comparisons, analysis, multiple topics): 300-500 words
+- Adjust naturally based on the question's complexity and scope
 
 """
     
@@ -1351,6 +1500,7 @@ Handler = create_handler_class(
     rerank_documents=rerank_documents,
     build_dynamic_prompt=build_dynamic_prompt,
     build_notebooklm_style_prompt=build_notebooklm_style_prompt,
+    estimate_answer_length=estimate_answer_length,
     retriever_getter=lambda: retriever,
     vectorstore_getter=lambda: vectorstore,
     HAS_RERANKER=HAS_RERANKER,

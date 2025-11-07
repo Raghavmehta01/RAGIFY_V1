@@ -18,7 +18,126 @@ const uploadFileBtn = document.getElementById("upload-file-btn");
 const fileStatus = document.getElementById("file-status");
 
 function renderMarkdown(text) {
-  return text.replace(/^### (.*)$/gm, '<h3>$1</h3>');
+  if (!text) return '';
+  
+  let html = text;
+  
+  // Process code blocks first (before other processing)
+  html = html.replace(/```([\s\S]*?)```/g, (match, code) => {
+    return '<pre><code>' + escapeHtml(code) + '</code></pre>';
+  });
+  
+  // Process inline code
+  html = html.replace(/`([^`\n]+)`/g, (match, code) => {
+    return '<code>' + escapeHtml(code) + '</code>';
+  });
+  
+  // Split by lines for line-by-line processing
+  const lines = html.split('\n');
+  const processedLines = [];
+  let inList = false;
+  let listItems = [];
+  
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim();
+    
+    // Headers
+    if (line.startsWith('### ')) {
+      if (inList) {
+        processedLines.push('</ul>');
+        inList = false;
+      }
+      processedLines.push('<h3>' + escapeHtml(line.substring(4)) + '</h3>');
+      continue;
+    }
+    if (line.startsWith('## ')) {
+      if (inList) {
+        processedLines.push('</ul>');
+        inList = false;
+      }
+      processedLines.push('<h2>' + escapeHtml(line.substring(3)) + '</h2>');
+      continue;
+    }
+    if (line.startsWith('# ')) {
+      if (inList) {
+        processedLines.push('</ul>');
+        inList = false;
+      }
+      processedLines.push('<h1>' + escapeHtml(line.substring(2)) + '</h1>');
+      continue;
+    }
+    
+    // List items
+    if (/^[\*\-\+] /.test(line) || /^\d+\. /.test(line)) {
+      if (!inList) {
+        inList = true;
+        processedLines.push('<ul>');
+      }
+      const listContent = line.replace(/^[\*\-\+] /, '').replace(/^\d+\. /, '');
+      processedLines.push('<li>' + processInlineMarkdown(listContent) + '</li>');
+      continue;
+    }
+    
+    // End list if we hit a non-list line
+    if (inList && line !== '') {
+      processedLines.push('</ul>');
+      inList = false;
+    }
+    
+    // Empty line
+    if (line === '') {
+      processedLines.push('');
+      continue;
+    }
+    
+    // Regular paragraph
+    processedLines.push('<p>' + processInlineMarkdown(line) + '</p>');
+  }
+  
+  // Close any open list
+  if (inList) {
+    processedLines.push('</ul>');
+  }
+  
+  return processedLines.join('\n');
+}
+
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+function processInlineMarkdown(text) {
+  // Escape HTML first
+  let html = escapeHtml(text);
+  
+  // Process bold (**text** or __text__) first - this takes priority over italic
+  html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+  html = html.replace(/__([^_]+)__/g, '<strong>$1</strong>');
+  
+  // Process italic (*text* or _text_) - only match if not already processed as bold
+  // Match single asterisks that aren't part of double asterisks
+  html = html.replace(/\*([^*\n]+?)\*/g, (match, content) => {
+    // Skip if this was already part of a bold match (check if content has HTML tags)
+    if (content.includes('<strong>') || content.includes('</strong>')) {
+      return match;
+    }
+    return '<em>' + content + '</em>';
+  });
+  
+  html = html.replace(/_([^_\n]+?)_/g, (match, content) => {
+    // Skip if this was already part of a bold match
+    if (content.includes('<strong>') || content.includes('</strong>')) {
+      return match;
+    }
+    return '<em>' + content + '</em>';
+  });
+  
+  // Links [text](url)
+  html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
+  
+  return html;
 }
 
 async function ask(q, provider) {
