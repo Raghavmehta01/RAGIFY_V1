@@ -124,13 +124,18 @@ print(f"✅ Multi-model support enabled - users can select provider in UI")
 
 # ---- Build RAG at startup ----
 
+# Changes made by Raghav Mehta with current timestamp: 2025-11-07 13:52:27
+# Reason: Added PayPlus 360 URLs for web scraping to build knowledge base
+# - Added main PayPlus 360 page, legal notice, privacy policy, and terms of use
+# - These URLs provide context about PayPlus 360 application for ODT team restructuring project
 loader = WebBaseLoader(
-    web_paths=( "https://orangedatatech.com/team/",
-                "https://www.w3schools.com/python/default.asp",
-                "https://www.python.org/doc/",
-                
-               
-               
+    web_paths=(
+        "https://orangedatatech.com/team/",
+        "https://www.payplus360.com/index.html",
+        "https://www.payplus.com/PayPlus360",
+        "https://www.payplus360.com/legal-notice.html",
+        "https://www.payplus360.com/privacy-policy.html",
+        "https://www.payplus360.com/terms-of-use.html",
                ),
     raise_for_status=False, continue_on_failure=True, trust_env=True,
 )
@@ -564,8 +569,8 @@ if 'retriever' not in globals() or retriever is None:
         retriever = vectorstore.as_retriever(
             search_kwargs={
                 "k": 20,     # increased to 20 for maximum comprehensive context
-            }
-        )
+    }
+)
 # -------- end advanced chunking block --------
 
 # Function to add URLs dynamically to vectorstore
@@ -670,7 +675,19 @@ def add_url_to_vectorstore(url):
 def build_dynamic_prompt(format_type, content_type_hints, wants_explicit_detail, wants_brief):
     """Build a prompt template based on detected format preferences and content type"""
     
-    base_instruction = """You are a helpful AI assistant that provides accurate and comprehensive answers based on the provided context.
+    # Changes made by Raghav Mehta with current timestamp: 2025-11-07 13:52:27
+    # Reason: Added deployment context for ODT team and PayPlus 360 application
+    # - Context: AI model deployed for Orange Data Tech (ODT) team
+    # - Purpose: Provide context on PayPlus 360 application restructuring
+    # - Use case: Summarization, context awareness, and introductions
+    
+    base_instruction = """You are a helpful AI assistant deployed for the Orange Data Tech (ODT) team. Your primary purpose is to assist team members in understanding the restructuring of the PayPlus 360 application (a hiring/recruitment tool).
+
+# Deployment Context
+- **Team**: Orange Data Tech (ODT)
+- **Application**: PayPlus 360 (hiring/recruitment tool being restructured)
+- **Purpose**: Provide context, insights, and information about PayPlus 360 application restructuring
+- **Use Cases**: Summarization, context awareness, introductions based on documents, meetings, and conversations
 
 Answer the question using ONLY the information from the Context below. If the context is insufficient, reply exactly: "I don't know based on the provided information."
 
@@ -925,12 +942,23 @@ Provide a comprehensive answer:"""
 # Initialize LLM
 # LLM will be created dynamically per request based on user selection
 
+# Changes made by Raghav Mehta with current timestamp: 2025-11-07 13:35:32
+# Reason: Added deployment context for ODT team and PayPlus 360 application to default prompt
+# - Context: AI model deployed for Orange Data Tech (ODT) team
+# - Purpose: Provide context on PayPlus 360 application restructuring
+# - Use case: Summarization, context awareness, and introductions based on documents, meetings, conversations
 prompt = ChatPromptTemplate.from_template(
-    """You are a helpful AI assistant that provides accurate and comprehensive answers based on the provided context.
+    """You are a helpful AI assistant deployed for the Orange Data Tech (ODT) team. Your primary purpose is to assist team members in understanding the restructuring of the PayPlus 360 application (a hiring/recruitment tool).
+
+# Deployment Context
+- **Team**: Orange Data Tech (ODT)
+- **Application**: PayPlus 360 (hiring/recruitment tool)
+- **Purpose**: Provide context, insights, and information about PayPlus 360 application restructuring
+- **Use Cases**: Summarization, context awareness, introductions based on documents, meetings, and conversations
 
 Answer the question using ONLY the information from the Context below. If the context is insufficient, reply exactly: "I don't know based on the provided information."
 
-Your goal is to provide a complete, well-structured answer that fully addresses the question using all relevant information from the context. Structure your response with clear paragraphs that explain concepts thoroughly and include all relevant details, examples, and nuances from the provided context.
+Your goal is to provide a complete, well-structured answer that fully addresses the question using all relevant information from the context. Structure your response with clear paragraphs that explain concepts thoroughly and include all relevant details, examples, and nuances from the provided context, especially as they relate to PayPlus 360 and its restructuring.
 
 Context:
 {context}
@@ -999,6 +1027,180 @@ def enhance_query_for_retrieval(query, content_type_hints):
         enhanced = f"{query} project documentation technology stack team members clients stakeholders rules guidelines"
     
     return enhanced
+
+# Changes made by Raghav Mehta with current timestamp: 2025-11-07 13:35:32
+# Reason: Implemented NotebookLM-style prompt system for better answer quality
+# - Added NotebookLM-inspired prompt with interest-driven insights
+# - Includes style modes: Analyst, Guide, Researcher, Default
+# - Features source attribution, structured answers, and context-aware depth
+# - Provides comprehensive, insightful answers similar to NotebookLM
+def build_notebooklm_style_prompt(style="default", content_type_hints=None, wants_explicit_detail=False, wants_brief=False):
+    """Build NotebookLM-inspired prompt with style customization and interest-driven insights"""
+    
+    # Changes made by Raghav Mehta with current timestamp: 2025-11-07 13:35:32
+    # Reason: Added deployment context for ODT team and PayPlus 360 application
+    # - Context: AI model deployed for Orange Data Tech (ODT) team
+    # - Purpose: Provide context on PayPlus 360 application restructuring
+    # - Use case: Summarization, context awareness, and introductions based on documents, meetings, conversations
+    # - Application: PayPlus 360 is a hiring tool being restructured by ODT
+    
+    base_instruction = """You are an expert research assistant and document analyst, similar to NotebookLM, deployed specifically for the Orange Data Tech (ODT) team. Your primary role is to assist the ODT team members in understanding the restructuring of the PayPlus 360 application.
+
+# Deployment Context
+- **Team**: Orange Data Tech (ODT)
+- **Application**: PayPlus 360 (a hiring/recruitment tool)
+- **Purpose**: Provide context, insights, and information about the PayPlus 360 application restructuring
+- **Use Cases**: 
+  - Summarization of documents, meetings, and conversations
+  - Context awareness for team members working on the restructuring
+  - Providing introductions and overviews of the application and its components
+  - Answering questions about the restructuring process, architecture, and implementation
+
+# Core Principles
+1. **Source-Grounded**: Base your answer ONLY on the provided context. If information isn't in the sources, state: "Based on the provided sources, I cannot find information about [specific aspect]."
+2. **Interest-Driven**: Highlight surprising, counterintuitive, or particularly interesting insights from the sources, especially those relevant to the PayPlus 360 restructuring.
+3. **Structured Clarity**: Organize information clearly with definitions, examples, and concrete applications related to PayPlus 360.
+4. **Context-Aware**: Adapt your explanation depth based on the question's complexity and apparent user expertise level. Remember you're helping ODT team members understand their own project.
+
+"""
+    
+    # Style-specific instructions (NotebookLM-style)
+    style_instructions = {
+        "analyst": """# Style: Business Analyst
+- Focus on business implications, ROI, and strategic insights
+- Use data-driven language and metrics
+- Highlight competitive advantages and market positioning
+- Provide actionable recommendations
+- Structure with executive summary, analysis, and recommendations
+
+""",
+        "guide": """# Style: Instructional Guide
+- Provide step-by-step explanations
+- Use clear, instructional language
+- Include examples and use cases
+- Break down complex concepts into digestible parts
+- Structure as a tutorial or how-to guide
+
+""",
+        "researcher": """# Style: Research Analyst
+- Provide deep technical analysis
+- Include methodology and evidence
+- Cite sources extensively
+- Highlight research gaps and limitations
+- Structure with hypothesis, evidence, and conclusions
+
+""",
+        "default": """# Style: Comprehensive Analyst
+- Balance depth with clarity
+- Provide both high-level overview and detailed insights
+- Include examples and practical applications
+- Structure with clear sections and subsections
+
+"""
+    }
+    
+    style_instruction = style_instructions.get(style, style_instructions["default"])
+    
+    # Content type specific guidance
+    content_guidance = ""
+    if content_type_hints and content_type_hints.get("meeting"):
+        content_guidance = """# Content Type: Meeting/Transcript
+- Extract key decisions, action items, and insights
+- Identify surprising revelations or important discussions
+- Note participant contributions and perspectives
+- Highlight follow-up items and next steps
+- Structure with: Overview, Key Discussions, Decisions, Action Items, Insights
+
+"""
+    elif content_type_hints and content_type_hints.get("project"):
+        content_guidance = """# Content Type: Project Documentation
+- Extract technical details, architecture, and implementation
+- Highlight innovative approaches or unique solutions
+- Note challenges and how they were addressed
+- Include team structure and responsibilities
+- Structure with: Overview, Technical Details, Architecture, Team, Challenges & Solutions
+
+"""
+    
+    # Length guidance based on user intent
+    if wants_explicit_detail and not wants_brief:
+        length_guidance = """# Length Requirements
+- Provide comprehensive answer (500+ words minimum)
+- Expand extensively on every point with full context
+- Include all relevant details, examples, and explanations
+- Be thorough and complete
+
+"""
+    elif wants_brief:
+        length_guidance = """# Length Requirements
+- Keep answer concise (2-3 sentences or brief format)
+- Focus on essential information only
+
+"""
+    else:
+        length_guidance = """# Length Requirements
+- Provide detailed answer (300-500 words)
+- Include sufficient context and explanations
+- Balance comprehensiveness with readability
+
+"""
+    
+    answer_structure = """# Answer Structure
+Your answer should follow this structure:
+
+## Direct Answer
+[Provide a clear, direct response to the question in 2-3 sentences]
+
+## Key Insights
+[Highlight the most important, surprising, or interesting points from the sources]
+- Insight 1: [with source reference]
+- Insight 2: [with source reference]
+- Insight 3: [with source reference]
+
+## Detailed Explanation
+[Provide comprehensive explanation with:]
+- Clear definitions of key concepts
+- Concrete examples from the sources
+- Relevant context and background
+- Connections between different pieces of information
+
+## Practical Applications
+[If applicable, include:]
+- How this information can be used
+- Real-world examples from the sources
+- Actionable takeaways
+
+## Source Attribution
+[Cite specific sources for key claims]
+- "[Quote or claim]" - Source: [Source name]
+- "[Quote or claim]" - Source: [Source name]
+
+"""
+    
+    writing_guidelines = """# Writing Guidelines
+- **Be Insightful**: Don't just summarize—synthesize and highlight what's most valuable
+- **Be Precise**: Use specific details, numbers, and examples from the sources
+- **Be Clear**: Use simple language for complex concepts, but don't oversimplify
+- **Be Comprehensive**: Cover all relevant aspects of the question
+- **Be Honest**: Acknowledge gaps in the sources when they exist
+
+# Style Adaptation
+- If the question suggests expertise: Provide deeper technical details
+- If the question suggests learning: Provide more foundational explanations
+- If the question suggests application: Focus on practical uses and examples
+
+"""
+    
+    full_prompt = f"""{base_instruction}{style_instruction}{content_guidance}{length_guidance}{answer_structure}{writing_guidelines}
+Context (Sources):
+{{context}}
+
+Question:
+{{question}}
+
+Provide your answer following the NotebookLM-style structure above:"""
+    
+    return ChatPromptTemplate.from_template(full_prompt)
 
 # RAG chain will be created dynamically per request based on selected provider/model
 
@@ -1634,16 +1836,28 @@ class Handler(SimpleHTTPRequestHandler):
             else:
                 adjusted_temp = TEMPERATURE
             
+            # Changes made by Raghav Mehta with current timestamp: 2025-11-07 13:35:32
+            # Reason: Integrated NotebookLM-style prompts as default for better answer quality
+            # - Uses NotebookLM-style prompts for comprehensive, insightful answers
+            # - Falls back to format-specific prompts when format is explicitly requested
+            # - Provides interest-driven insights and source attribution
             # ===== DYNAMIC PROMPT SELECTION =====
-            # Use dynamic prompt builder if format is detected, otherwise use default behavior
+            # Use NotebookLM-style prompts by default for better quality
+            # Use format-specific prompts only when format is explicitly requested
             if detected_format:
-                # Use dynamic prompt builder for detected format
+                # Use dynamic prompt builder for detected format (table, list, etc.)
                 enhanced_prompt = build_dynamic_prompt(detected_format, content_type_hints, wants_explicit_detail, wants_brief)
                 print(f"   📝 Using dynamic prompt for format: {detected_format}")
             elif wants_explicit_detail and not wants_brief:
                 # Use the aggressive 500+ words prompt ONLY when explicitly requested
                 enhanced_prompt = ChatPromptTemplate.from_template(
-                    """You are a helpful AI assistant that provides accurate and comprehensive answers based on the provided context.
+                    """You are a helpful AI assistant deployed for the Orange Data Tech (ODT) team. Your primary purpose is to assist team members in understanding the restructuring of the PayPlus 360 application (a hiring/recruitment tool).
+
+# Deployment Context
+- **Team**: Orange Data Tech (ODT)
+- **Application**: PayPlus 360 (hiring/recruitment tool being restructured)
+- **Purpose**: Provide context, insights, and information about PayPlus 360 application restructuring
+- **Use Cases**: Summarization, context awareness, introductions based on documents, meetings, and conversations
 
 Answer the question using ONLY the information from the Context below. If the context is insufficient, reply exactly: "I don't know based on the provided information."
 
@@ -1676,7 +1890,12 @@ Question:
             elif wants_brief:
                 # Use a brief prompt for explicit brief requests
                 enhanced_prompt = ChatPromptTemplate.from_template(
-                    """You are a helpful AI assistant that provides concise and precise answers.
+                    """You are a helpful AI assistant deployed for the Orange Data Tech (ODT) team. Your primary purpose is to assist team members in understanding the restructuring of the PayPlus 360 application (a hiring/recruitment tool).
+
+# Deployment Context
+- **Team**: Orange Data Tech (ODT)
+- **Application**: PayPlus 360 (hiring/recruitment tool being restructured)
+- **Purpose**: Provide context, insights, and information about PayPlus 360 application restructuring
 
 Answer the question using ONLY the information from the Context below. If the context is insufficient, reply exactly: "I don't know based on the provided information."
 
@@ -1689,51 +1908,20 @@ Question:
 {question}"""
                 )
                 print(f"   📝 Using brief prompt")
-            elif wants_detail and not wants_brief:
-                # Normal detailed answer (balanced, not forced 500+ words)
-                enhanced_prompt = ChatPromptTemplate.from_template(
-                    """You are a helpful AI assistant that provides accurate and comprehensive answers based on the provided context.
-
-Answer the question using ONLY the information from the Context below. If the context is insufficient, reply exactly: "I don't know based on the provided information."
-
-Provide a detailed, well-structured answer with full paragraphs (4-6 sentences each). Expand on each point with context, examples, and explanations. Use transition words to connect ideas. Aim for 300-500 words - be comprehensive but natural, not forced.
-
-WRITING STYLE:
-- Use well-structured paragraphs with proper transitions
-- Each paragraph should be 4-6 sentences explaining one topic
-- Connect ideas with transition words (Furthermore, Additionally, Moreover, etc.)
-- Include relevant examples and explanations from the context
-- Be thorough but natural - don't pad unnecessarily
-
-Your goal is to provide a complete, well-structured answer that fully addresses the question using relevant information from the context.
-
-Context:
-{context}
-
-Question:
-{question}
-
-Provide a comprehensive answer:"""
-                )
-                print(f"   📝 Using balanced detailed prompt (300-500 words)")
             else:
-                # Default: Use balanced prompt
-                enhanced_prompt = ChatPromptTemplate.from_template(
-                    """You are a helpful AI assistant that provides accurate and comprehensive answers based on the provided context.
-
-Answer the question using ONLY the information from the Context below. If the context is insufficient, reply exactly: "I don't know based on the provided information."
-
-Provide a clear, well-structured answer with proper paragraphs. Include relevant details and context. Be comprehensive but concise.
-
-Context:
-{context}
-
-Question:
-{question}
-
-Provide a clear and comprehensive answer:"""
-                )
-                print(f"   📝 Using default balanced prompt")
+                # Use NotebookLM-style prompt by default for comprehensive, insightful answers
+                # Detect style from question (analyst, guide, researcher, or default)
+                style = "default"
+                question_lower_style = q.lower()
+                if any(word in question_lower_style for word in ["analyze", "analysis", "business", "strategy", "roi", "market"]):
+                    style = "analyst"
+                elif any(word in question_lower_style for word in ["how to", "guide", "tutorial", "steps", "instructions", "explain"]):
+                    style = "guide"
+                elif any(word in question_lower_style for word in ["research", "study", "evidence", "methodology", "hypothesis"]):
+                    style = "researcher"
+                
+                enhanced_prompt = build_notebooklm_style_prompt(style, content_type_hints, wants_explicit_detail, wants_brief)
+                print(f"   📝 Using NotebookLM-style prompt (style: {style})")
             
             # Create dynamic RAG chain with selected LLM
             try:
