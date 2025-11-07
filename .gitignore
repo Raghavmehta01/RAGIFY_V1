@@ -12,3 +12,4 @@ server.log
 # docs/*.pdf
 # docs/*.doc
 # docs/*.docx
+app/keep_only_payplus.py

@@ -130,7 +130,7 @@ print(f"✅ Multi-model support enabled - users can select provider in UI")
 # - These URLs provide context about PayPlus 360 application for ODT team restructuring project
 loader = WebBaseLoader(
     web_paths=(
-        "https://orangedatatech.com/team/",
+        
         "https://www.payplus360.com/index.html",
         "https://www.payplus.com/PayPlus360",
         "https://www.payplus360.com/legal-notice.html",
