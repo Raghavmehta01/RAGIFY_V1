@@ -28,7 +28,20 @@ button { appearance: none; border: 1px solid var(--border); border-radius: 10px;
 .examples { display: flex; gap: 10px; align-items: center; color: var(--muted); margin: 14px 4px; flex-wrap: wrap; }
 .chip { background: var(--chip); border: 1px solid var(--border); color: var(--text); border-radius: 999px; padding: 8px 12px; font-size: 14px; }
 
-#result { margin-top: 18px; background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 16px; white-space: pre-wrap; }
+#result { 
+  margin-top: 18px; 
+  background: var(--panel); 
+  border: 1px solid var(--border); 
+  border-radius: 14px; 
+  padding: 24px 28px; 
+  white-space: pre-wrap; 
+  min-height: 300px;
+  max-height: 80vh;
+  overflow-y: auto;
+  font-size: 15px;
+  line-height: 1.8;
+  word-wrap: break-word;
+}
 .success { color: var(--success); }
 .error { color: var(--error); }
 .sr-only { position: absolute; left: -10000px; width: 1px; height: 1px; overflow: hidden; }

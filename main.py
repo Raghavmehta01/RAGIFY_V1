@@ -1,3 +1,14 @@
+# # Step 1: Stop existing server (if running)
+# pkill -f "python.*main.py"
+# lsof -ti:8000 | xargs kill -9 2>/dev/null
+
+# # Step 2: Start server
+# cd /Users/raghavmehta/Desktop/Coding/ragify_v1
+# source .venv/bin/activate  # If using virtual environment
+# python3 app/main.py
+
+
+
 # Azure-ready RAG application with multiple LLM provider support
 # Set LLM_PROVIDER=openai or LLM_PROVIDER=gemini
 # For OpenAI: set OPENAI_API_KEY
@@ -371,9 +382,9 @@ prompt = ChatPromptTemplate.from_template(
 If the context is insufficient, reply exactly: I don't know based on the provided information.
 
 Constraints:
-- Be concise and specific.
-- Use bullet points only when listing.
-- Do not invent sources or facts.
+- Be detailed and comprehensive.
+- Be accurate and 
+- Clear paragraphs and lists
 
 Context:
 {context}

@@ -7,3 +7,8 @@ __pycache__/
 *.log
 *.zip
 server.log
+
+# Keep docs/ folder but ignore large files if needed
+# docs/*.pdf
+# docs/*.doc
+# docs/*.docx
