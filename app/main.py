@@ -1,6 +1,5 @@
 # Azure-ready RAG application with multiple LLM provider support
-# Set LLM_PROVIDER=openai or LLM_PROVIDER=gemini
-# For OpenAI: set OPENAI_API_KEY
+# Set LLM_PROVIDER=gemini or LLM_PROVIDER=groq
 # For Gemini: set GOOGLE_API_KEY
 
 import os, json
@@ -23,11 +22,9 @@ from langchain_core.runnables import RunnablePassthrough
 from langchain.prompts import ChatPromptTemplate
 
 # ---- LLM Provider Settings ----
-LLM_PROVIDER = os.getenv("LLM_PROVIDER", "gemini").lower()  # openai | gemini | groq
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+LLM_PROVIDER = os.getenv("LLM_PROVIDER", "gemini").lower()  # gemini | groq
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
-OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-3.5-turbo")
 GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.0-flash")
 GROQ_MODEL = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
 TEMPERATURE = float(os.getenv("TEMPERATURE", "0.1"))
@@ -38,16 +35,7 @@ def get_llm(provider=None, model=None):
     # Use provided provider or default to environment variable
     selected_provider = (provider or LLM_PROVIDER).lower()
     
-    if selected_provider == "openai":
-        if not OPENAI_API_KEY:
-            raise ValueError("OPENAI_API_KEY environment variable is required when using OpenAI provider")
-        from langchain_openai import ChatOpenAI
-        return ChatOpenAI(
-            model=model or OPENAI_MODEL,
-            temperature=TEMPERATURE,
-            api_key=OPENAI_API_KEY
-        )
-    elif selected_provider == "gemini":
+    if selected_provider == "gemini":
         if not GOOGLE_API_KEY:
             raise ValueError("GOOGLE_API_KEY environment variable is required when using Gemini provider")
         # Use google-generativeai directly due to version compatibility issues
@@ -111,12 +99,10 @@ def get_llm(provider=None, model=None):
             groq_api_key=GROQ_API_KEY
         )
     else:
-        raise ValueError(f"Unsupported LLM provider: {selected_provider}. Use 'openai', 'gemini', or 'groq'")
+        raise ValueError(f"Unsupported LLM provider: {selected_provider}. Use 'gemini' or 'groq'")
 
 print(f"🤖 Default LLM Provider: {LLM_PROVIDER.upper()}")
-if LLM_PROVIDER == "openai":
-    print(f"   Default Model: {OPENAI_MODEL}")
-elif LLM_PROVIDER == "gemini":
+if LLM_PROVIDER == "gemini":
     print(f"   Default Model: {GEMINI_MODEL}")
 elif LLM_PROVIDER == "groq":
     print(f"   Default Model: {GROQ_MODEL}")
@@ -812,7 +798,7 @@ def build_dynamic_prompt(format_type, content_type_hints, wants_explicit_detail,
 - **Be Comprehensive**: Cover all aspects of the question thoroughly, but avoid unnecessary repetition
 - **Be Precise**: Use specific details, examples, and information from the context
 - **Be Structured**: Organize your answer logically with clear sections and transitions
-- **Be Concise**: Avoid repeating the same information multiple times - each point should be made once, clearly
+- **Be Clear**: Avoid repeating the same information multiple times 
 - **Be Contextual**: Connect information from different parts of the context when relevant
 - **Be Original**: Do not repeat phrases, sentences, or entire paragraphs - vary your language and structure
 
@@ -822,10 +808,15 @@ def build_dynamic_prompt(format_type, content_type_hints, wants_explicit_detail,
 - **Varied Language**: Use different words and phrases to express similar ideas
 - **Progressive Detail**: Build on information rather than restating it
 - **Unique Examples**: Use different examples to illustrate points - don't reuse the same example
-- **Fresh Perspectives**: Approach the same topic from different angles if you need to revisit it
 - **Single Mention Rule**: If a fact, detail, or concept is mentioned once in the context, mention it only once in your answer. Do not repeat the same information in different parts of your response.
 
 Answer the question using ONLY the information from the Context below. If the context is insufficient or the question is unrelated to PayPlus 360, reply exactly: "I don't know based on the provided information."
+
+# Critical: Information Source Restriction
+- **DO NOT add, invent, or infer any information that is not explicitly present in the provided context or text**
+- **DO NOT use general knowledge, external facts, or assumptions beyond what is in the context**
+- **ONLY use information, facts, details, examples, and data that are directly stated or clearly implied in the provided context**
+- When the context lacks information, acknowledge this rather than supplementing with external knowledge
 
 """
     
@@ -1139,6 +1130,13 @@ prompt = ChatPromptTemplate.from_template(
 
 Answer the question using ONLY the information from the Context below. If the context is insufficient or the question is unrelated to PayPlus 360, reply exactly: "I don't know based on the provided information."
 
+# Critical: Information Source Restriction
+- **DO NOT add, invent, or infer any information that is not explicitly present in the provided context or text**
+- **DO NOT use general knowledge, external facts, or assumptions beyond what is in the context**
+- **ONLY use information, facts, details, examples, and data that are directly stated or clearly implied in the provided context**
+- If information is not in the context, do not include it - even if you know it from other sources
+- When the context lacks information, acknowledge this rather than supplementing with external knowledge
+
 Your goal is to provide a complete, well-structured answer that fully addresses the question using all relevant information from the context. Structure your response with clear paragraphs that explain concepts thoroughly and include all relevant details, examples, and nuances from the provided context, especially as they relate to PayPlus 360 and its restructuring. Avoid repeating the same information - make each sentence add unique value.
 
 Context:
@@ -1154,7 +1152,7 @@ Provide a comprehensive answer:"""
 # Reason: Enhanced document formatting with rich metadata for better context understanding
 # - Added project identifiers, meeting dates, document types, and categories to headers
 # - Improved LLM's ability to understand document context and relationships
-# - Better source attribution and metadata visibility for structured extraction
+# - Better metadata visibility for structured extraction
 def format_docs(docs):
     """Format documents with enhanced structure and metadata for richer context, optimized for meetings and projects"""
     formatted_parts = []
@@ -1256,7 +1254,7 @@ def rerank_documents(query, documents, top_k=None):
 # Reason: Implemented NotebookLM-style prompt system for better answer quality
 # - Added NotebookLM-inspired prompt with interest-driven insights
 # - Includes style modes: Analyst, Guide, Researcher, Default
-# - Features source attribution, structured answers, and context-aware depth
+# - Features structured answers and context-aware depth
 # - Provides comprehensive, insightful answers similar to NotebookLM
 def build_notebooklm_style_prompt(style="default", content_type_hints=None, wants_explicit_detail=False, wants_brief=False, estimated_length=None):
     """Build NotebookLM-inspired prompt with style customization and interest-driven insights"""
@@ -1281,17 +1279,16 @@ def build_notebooklm_style_prompt(style="default", content_type_hints=None, want
   - Providing introductions and overviews of the application and its components
 
 # Important: Scope Limitation
-- You should ONLY answer questions related to PayPlus 360, its restructuring, the ODT team, or information provided in the context.
-- If the question is unrelated to PayPlus 360, out of context, or about topics not covered in the provided context, reply exactly: "I don't know based on the provided information."
 - Do not answer general knowledge questions, questions about other applications, or any questions that are not directly related to PayPlus 360 or the ODT team's work.
 
 # Core Principles
-1. **Source-Grounded**: Base your answer ONLY on the provided context. If information isn't in the sources, state: "Based on the provided sources, I cannot find information about [specific aspect]."
-2. **Interest-Driven**: Highlight surprising, counterintuitive, or particularly interesting insights from the sources, especially those relevant to the PayPlus 360 restructuring.
-3. **Structured Clarity**: Organize information clearly with definitions, examples, and concrete applications related to PayPlus 360.
-4. **Context-Aware**: Adapt your explanation depth based on the question's complexity and apparent user expertise level. Remember you're helping ODT team members understand their own project.
-5. **Non-Repetitive**: Avoid repeating the same information, phrases, or examples. Each sentence should add unique value and new information or perspective.
-6. **Adaptive Length**: Adjust answer length based on question complexity - simple questions need concise answers, complex questions need detailed explanations.
+1. **Context-Grounded**: Base your answer ONLY on the provided context. If information isn't in the context, state: "I don't know based on the provided information."
+2. **Strict Information Source**: DO NOT add, invent, or infer any information that is not explicitly present in the provided context or text. DO NOT use general knowledge, external facts, or assumptions beyond what is in the context. ONLY use information, facts, details, examples, and data that are directly stated or clearly implied in the provided context.
+3. **Interest-Driven**: Highlight surprising, counterintuitive, or particularly interesting insights from the context, especially those relevant to the PayPlus 360 restructuring.
+4. **Structured Clarity**: Organize information clearly with definitions, examples, and concrete applications related to PayPlus 360.
+5. **Context-Aware**: Adapt your explanation depth based on the question's complexity and apparent user expertise level. Remember you're helping ODT team members understand their own project.
+6. **Non-Repetitive**: Avoid repeating the same information, phrases, or examples. Each sentence should add unique value and new information or perspective.
+7. **Adaptive Length**: Adjust answer length based on question complexity - simple questions need concise answers, complex questions need detailed explanations.
 
 # Anti-Repetition Guidelines
 - **Unique Content**: Every sentence should contribute new information or a new perspective
@@ -1325,7 +1322,6 @@ def build_notebooklm_style_prompt(style="default", content_type_hints=None, want
         "researcher": """# Style: Research Analyst
 - Provide deep technical analysis
 - Include methodology and evidence
-- Cite sources extensively
 - Highlight research gaps and limitations
 - Structure with hypothesis, evidence, and conclusions
 
@@ -1404,37 +1400,33 @@ Your answer should follow this structure:
 [Provide a clear, direct response to the question in 2-3 sentences]
 
 ## Key Insights
-[Highlight the most important, surprising, or interesting points from the sources]
-- Insight 1: [with source reference]
-- Insight 2: [with source reference]
-- Insight 3: [with source reference]
+[This section is optional. Only include the question asked needs summarization. If applicable, include:]
+- Insight 1: [key point]
+- Insight 2: [key point]
+- Insight 3: [key point]
 
 ## Detailed Explanation
 [Provide comprehensive explanation with:]
 - Clear definitions of key concepts
-- Concrete examples from the sources
+- Concrete examples from the context
 - Relevant context and background
 - Connections between different pieces of information
 
-## Practical Applications
-[If applicable, include:]
+## Practical Applications 
+[This section is optional. Only include this section if the question asked is related to the practical applications. If applicable, include:]
 - How this information can be used
-- Real-world examples from the sources
+- Real-world examples from the context
 - Actionable takeaways
 
-## Source Attribution
-[Cite specific sources for key claims]
-- "[Quote or claim]" - Source: [Source name]
-- "[Quote or claim]" - Source: [Source name]
 
 """
     
     writing_guidelines = """# Writing Guidelines
 - **Be Insightful**: Don't just summarize—synthesize and highlight what's most valuable
-- **Be Precise**: Use specific details, numbers, and examples from the sources
+- **Be Precise**: Use specific details, numbers, and examples from the context
 - **Be Clear**: Use simple language for complex concepts, but don't oversimplify
 - **Be Comprehensive**: Cover all relevant aspects of the question without repetition
-- **Be Honest**: Acknowledge gaps in the sources when they exist
+- **Be Honest**: Acknowledge gaps in the context when they exist
 - **Be Original**: Vary your language and structure - avoid repeating phrases or entire paragraphs
 - **Be Efficient**: Make every sentence count - eliminate redundant statements
 
@@ -1486,10 +1478,8 @@ from handler import create_handler_class
 Handler = create_handler_class(
     get_llm=get_llm,
     LLM_PROVIDER=LLM_PROVIDER,
-    OPENAI_MODEL=OPENAI_MODEL,
     GEMINI_MODEL=GEMINI_MODEL,
     GROQ_MODEL=GROQ_MODEL,
-    OPENAI_API_KEY=OPENAI_API_KEY,
     GOOGLE_API_KEY=GOOGLE_API_KEY,
     GROQ_API_KEY=GROQ_API_KEY,
     TEMPERATURE=TEMPERATURE,

@@ -6,14 +6,258 @@ Handles all HTTP requests for the RAG application.
 import os
 import json
 import cgi
+import uuid
+import time
 from http.server import SimpleHTTPRequestHandler
-from langchain_core.messages import HumanMessage
+from langchain_core.messages import HumanMessage, AIMessage
 from langchain.prompts import ChatPromptTemplate
 from langchain_core.runnables import RunnablePassthrough
 
+# Session memory storage: {session_id: [{"question": str, "answer": str, "timestamp": float}, ...]}
+# Sessions expire after 1 hour of inactivity
+SESSION_STORAGE = {}
+SESSION_TIMEOUT = 3600  # 1 hour in seconds
+
+def get_or_create_session(session_id=None):
+    """Get existing session or create new one"""
+    if session_id and session_id in SESSION_STORAGE:
+        # Check if session expired
+        if SESSION_STORAGE[session_id]:
+            last_timestamp = SESSION_STORAGE[session_id][-1].get("timestamp", 0)
+            if time.time() - last_timestamp < SESSION_TIMEOUT:
+                return session_id
+            else:
+                # Session expired, remove it
+                del SESSION_STORAGE[session_id]
+    
+    # Create new session
+    new_session_id = str(uuid.uuid4())
+    SESSION_STORAGE[new_session_id] = []
+    return new_session_id
+
+def add_to_session(session_id, question, answer):
+    """Add question-answer pair to session history"""
+    if session_id not in SESSION_STORAGE:
+        SESSION_STORAGE[session_id] = []
+    SESSION_STORAGE[session_id].append({
+        "question": question,
+        "answer": answer,
+        "timestamp": time.time()
+    })
+    # Keep only last 20 exchanges to prevent memory bloat
+    if len(SESSION_STORAGE[session_id]) > 20:
+        SESSION_STORAGE[session_id] = SESSION_STORAGE[session_id][-20:]
+
+def get_session_history(session_id, max_exchanges=10):
+    """Get conversation history for a session"""
+    if session_id not in SESSION_STORAGE:
+        return []
+    history = SESSION_STORAGE[session_id]
+    # Return last N exchanges
+    return history[-max_exchanges:] if len(history) > max_exchanges else history
+
+def clear_session(session_id):
+    """Clear a session's history"""
+    if session_id in SESSION_STORAGE:
+        SESSION_STORAGE[session_id] = []
+
+def is_follow_up_question(question, conversation_history):
+    """Detect if current question is a follow-up to previous conversation"""
+    if not conversation_history:
+        return False
+    
+    question_lower = question.lower().strip()
+    follow_up_patterns = [
+        "tell me more", "more about", "explain more", "more details",
+        "what about", "how about", "what is", "how does", "why does",
+        "can you", "could you", "please explain", "elaborate",
+        "that", "this", "it", "they", "those", "these",
+        "also", "and", "what else", "anything else",
+        "in relation to", "related to", "regarding", "concerning"
+    ]
+    
+    # Check for follow-up indicators
+    has_follow_up_word = any(pattern in question_lower for pattern in follow_up_patterns)
+    
+    # Check if question is very short (likely a follow-up)
+    is_short = len(question.split()) <= 5
+    
+    # Check if question references previous answer (pronouns, "that", etc.)
+    has_reference = any(word in question_lower for word in ["that", "this", "it", "they", "those", "these", "the above", "mentioned"])
+    
+    return has_follow_up_word or (is_short and has_reference) or has_reference
+
+def format_conversation_history(history, is_follow_up=False):
+    """Format conversation history for inclusion in prompt"""
+    if not history:
+        return ""
+    
+    formatted = "\n# Previous Conversation History\n"
+    
+    if is_follow_up:
+        formatted += "**IMPORTANT: This is a follow-up question. The user is asking for more information or clarification about something discussed earlier.**\n"
+        formatted += "The following conversation history contains the context you need to answer this follow-up question:\n\n"
+    else:
+        formatted += "The following is the conversation history for context. Use this to understand what was discussed earlier:\n\n"
+    
+    # Include full answers (no truncation) for better follow-up context
+    for i, exchange in enumerate(history, 1):
+        formatted += f"**Exchange {i}:**\n"
+        formatted += f"Question: {exchange['question']}\n"
+        formatted += f"Answer: {exchange['answer']}\n"  # No truncation - full answer for context
+        formatted += "\n"
+    
+    formatted += "---\n"
+    
+    if is_follow_up:
+        formatted += "**CRITICAL FOR FOLLOW-UP QUESTIONS:**\n"
+        formatted += "- This question is a follow-up to the conversation above\n"
+        formatted += "- Use the previous answers as PRIMARY context - they contain the information the user is asking about\n"
+        formatted += "- Reference specific details, examples, or points from the previous answers\n"
+        formatted += "- Build on and expand the information already provided\n"
+        formatted += "- If the question is unclear, infer what the user is asking about based on the conversation history\n"
+        formatted += "- The document context below provides additional supporting information, but prioritize the conversation history\n\n"
+    else:
+        formatted += "Now answer the current question below, using both the context provided and the conversation history above for reference.\n\n"
+    
+    return formatted
+
+def is_last_question_request(question, conversation_history):
+    """Check if user is asking about their last question"""
+    if not conversation_history:
+        return False
+    
+    question_lower = question.lower().strip()
+    last_question_patterns = [
+        "what was my last question",
+        "what was the last question",
+        "repeat my last question",
+        "repeat the last question",
+        "show me my last question",
+        "tell me my last question",
+        "what did i ask",
+        "what did i ask last",
+        "my previous question",
+        "the previous question",
+        "last question i asked",
+        "answer my last question",
+        "answer the last question",
+        "answer my previous question",
+        "answer the previous question",
+        "re-answer my last question",
+        "re-answer the last question"
+    ]
+    
+    return any(pattern in question_lower for pattern in last_question_patterns)
+
+def get_last_question(conversation_history):
+    """Get the last question from conversation history"""
+    if not conversation_history:
+        return None
+    return conversation_history[-1].get("question")
+
+def detect_document_reference(question, vectorstore):
+    """Detect if user is asking about a specific document and return the source name"""
+    import re
+    question_lower = question.lower()
+    
+    # Patterns that indicate document reference (in order of specificity)
+    reference_patterns = [
+        # Most specific: "from document X" or "in document X"
+        (r"from\s+(?:the\s+)?(?:document|doc|file|pdf|page|source|url)\s+(?:called|named|titled)?\s*['\"]?([^'\"\?]+)['\"]?", 1),
+        (r"in\s+(?:the\s+)?(?:document|doc|file|pdf|page|source|url)\s+(?:called|named|titled)?\s*['\"]?([^'\"\?]+)['\"]?", 1),
+        # "document X says" or "file X mentions"
+        (r"(?:document|doc|file|pdf|page|source|url)\s+(?:called|named|titled)?\s*['\"]?([^'\"\?]+)['\"]?\s+(?:says|mentions|states|contains)", 1),
+        # Filename with extension in quotes
+        (r"['\"]([^'\"]+\.(?:pdf|docx?|txt|html|md))['\"]", 1),
+        # URLs
+        (r"https?://[^\s\?]+", 0),
+        # "from X" or "in X" (less specific, check last)
+        (r"from\s+['\"]?([^'\"\?\s]{3,})['\"]?", 1),
+        (r"in\s+['\"]?([^'\"\?\s]{3,})['\"]?", 1),
+    ]
+    
+    for pattern, group_idx in reference_patterns:
+        try:
+            match = re.search(pattern, question, re.IGNORECASE)
+            if match:
+                if group_idx == 0:
+                    doc_ref = match.group(0).strip()  # For URL pattern (full match)
+                else:
+                    # Check if the group exists
+                    if match.lastindex and match.lastindex >= group_idx:
+                        doc_ref = match.group(group_idx).strip()
+                    else:
+                        continue  # Skip this pattern if group doesn't exist
+                
+                # Clean up the reference (remove trailing punctuation, etc.)
+                doc_ref = doc_ref.rstrip('.,!?;:')
+                
+                if doc_ref and len(doc_ref) > 2:  # Valid reference
+                    return doc_ref
+        except (IndexError, AttributeError) as e:
+            # Skip patterns that cause errors
+            continue
+    
+    return None
+
+def filter_documents_by_source(docs, source_reference):
+    """Filter documents to only include chunks from the specified source"""
+    if not source_reference or not docs:
+        return docs
+    
+    import re
+    source_ref_lower = source_reference.lower().strip()
+    filtered_docs = []
+    
+    # Extract key terms from reference (remove common words, get filename/domain)
+    # For URLs, extract domain; for filenames, extract name without extension
+    if source_ref_lower.startswith(('http://', 'https://')):
+        # URL: extract domain or full URL
+        key_terms = [source_ref_lower]
+        # Also try domain extraction
+        domain_match = re.search(r'https?://([^/]+)', source_ref_lower)
+        if domain_match:
+            key_terms.append(domain_match.group(1))
+    else:
+        # Filename: extract name parts
+        key_terms = [source_ref_lower]
+        # Remove extension for matching
+        name_without_ext = re.sub(r'\.[^.]+$', '', source_ref_lower)
+        if name_without_ext:
+            key_terms.append(name_without_ext)
+        # Extract words from the reference
+        words = re.findall(r'\b\w{3,}\b', source_ref_lower)
+        key_terms.extend(words)
+    
+    for doc in docs:
+        source = str(doc.metadata.get("source", "")).lower()
+        title = str(doc.metadata.get("title", "")).lower()
+        all_metadata = str(doc.metadata).lower()
+        
+        # Check if any key term matches
+        matches = False
+        for term in key_terms:
+            if (term in source or source in term or
+                term in title or title in term or
+                term in all_metadata):
+                matches = True
+                break
+        
+        if matches:
+            filtered_docs.append(doc)
+    
+    # If we found matching documents, return them; otherwise return all (maybe reference wasn't exact)
+    if filtered_docs:
+        print(f"   📄 Filtered to {len(filtered_docs)} chunks from referenced document: {source_reference[:50]}")
+        return filtered_docs
+    
+    print(f"   ⚠️  No exact match for document reference '{source_reference[:50]}', using all retrieved documents")
+    return docs  # Return all if no match found
+
 def create_handler_class(
-    get_llm, LLM_PROVIDER, OPENAI_MODEL, GEMINI_MODEL, GROQ_MODEL,
-    OPENAI_API_KEY, GOOGLE_API_KEY, GROQ_API_KEY, TEMPERATURE,
+    get_llm, LLM_PROVIDER, GEMINI_MODEL, GROQ_MODEL,
+    GOOGLE_API_KEY, GROQ_API_KEY, TEMPERATURE,
     add_url_to_vectorstore, add_file_to_vectorstore, format_docs,
     enhance_query_for_retrieval, rerank_documents,
     build_dynamic_prompt, build_notebooklm_style_prompt, estimate_answer_length,
@@ -270,6 +514,73 @@ def create_handler_class(
                     self.send_error(400, "question is required")
                     return
             
+                # Session memory: Get or create session
+                session_id = get_or_create_session(data.get("session_id"))
+                # Get initial history to detect follow-up
+                initial_history = get_session_history(session_id, max_exchanges=10)
+                
+                # Detect if this is a follow-up question
+                is_follow_up = is_follow_up_question(q, initial_history)
+                
+                # For follow-up questions, get more conversation history for better context
+                if is_follow_up:
+                    conversation_history = get_session_history(session_id, max_exchanges=15)  # More context for follow-ups
+                    print(f"   🔄 Detected follow-up question - using extended history")
+                else:
+                    conversation_history = initial_history
+                
+                print(f"   💬 Session: {session_id[:8]}... ({len(conversation_history)} previous exchanges)")
+            
+                # Check if user is asking about their last question
+                if is_last_question_request(q, conversation_history):
+                    last_question = get_last_question(conversation_history)
+                    if last_question:
+                        print(f"   🔄 User requested last question: '{last_question}'")
+                        # Check if they want to re-answer it or just see it
+                        q_lower = q.lower()
+                        wants_reanswer = any(phrase in q_lower for phrase in [
+                            "answer", "re-answer", "reanswer", "respond to"
+                        ])
+                        
+                        if wants_reanswer:
+                            # Re-answer the last question
+                            print(f"   ✅ Re-answering last question")
+                            q = last_question  # Use the last question as the current question
+                        else:
+                            # Just show the last question
+                            payload = {
+                                "answer": f"Your last question was: \"{last_question}\"\n\nWould you like me to answer it again?",
+                                "sources": [],
+                                "markdown": f"### Answer:\nYour last question was: **\"{last_question}\"**\n\nWould you like me to answer it again?",
+                                "needs_url": False,
+                                "session_id": session_id
+                            }
+                            blob = json.dumps(payload).encode("utf-8")
+                            self.send_response(200)
+                            self.send_header("Content-Type", "application/json")
+                            self.send_header("Content-Length", str(len(blob)))
+                            self.send_header("Access-Control-Allow-Origin", "*")
+                            self.end_headers()
+                            self.wfile.write(blob)
+                            return
+                    else:
+                        # No previous questions
+                        payload = {
+                            "answer": "You haven't asked any questions yet in this session.",
+                            "sources": [],
+                            "markdown": "### Answer:\nYou haven't asked any questions yet in this session.",
+                            "needs_url": False,
+                            "session_id": session_id
+                        }
+                        blob = json.dumps(payload).encode("utf-8")
+                        self.send_response(200)
+                        self.send_header("Content-Type", "application/json")
+                        self.send_header("Content-Length", str(len(blob)))
+                        self.send_header("Access-Control-Allow-Origin", "*")
+                        self.end_headers()
+                        self.wfile.write(blob)
+                        return
+            
                 # Get provider and model from request (default to environment settings)
                 provider = data.get("provider") or LLM_PROVIDER
                 model = data.get("model")
@@ -280,8 +591,8 @@ def create_handler_class(
                 # - Falls back to similarity search if MMR not supported
                 # Ensure we have the latest retriever (in case it was updated)
                 retriever = retriever_getter()
+                vectorstore = vectorstore_getter()
                 if retriever is None:
-                    vectorstore = vectorstore_getter()
                     try:
                         retriever = vectorstore.as_retriever(
                             search_type="mmr",
@@ -289,6 +600,12 @@ def create_handler_class(
                         )
                     except Exception:
                         retriever = vectorstore.as_retriever(search_kwargs={"k": 20})
+            
+                # ===== DOCUMENT REFERENCE DETECTION =====
+                # Check if user is asking about a specific document
+                referenced_doc = detect_document_reference(q, vectorstore)
+                if referenced_doc:
+                    print(f"   📄 User referenced specific document: {referenced_doc[:60]}")
             
                 # Changes made by Raghav Mehta with current timestamp: 2025-11-07 12:12:09
                 # Reason: Added query enhancement before retrieval to improve document matching
@@ -311,7 +628,21 @@ def create_handler_class(
                 }
             
                 # Enhance query for better retrieval
-                enhanced_query = enhance_query_for_retrieval(q, content_type_hints_preview)
+                # For follow-up questions, add context from previous conversation
+                if is_follow_up and conversation_history:
+                    # Extract key terms from recent answers to enhance the query
+                    last_answer = conversation_history[-1].get("answer", "")
+                    # Add relevant terms from last answer to query
+                    enhanced_q = q
+                    # Extract important nouns/phrases from last answer (simple approach)
+                    last_answer_words = last_answer.split()[:50]  # First 50 words
+                    # Add context terms to query
+                    context_terms = " ".join([w for w in last_answer_words if len(w) > 4])[:200]  # Terms longer than 4 chars
+                    enhanced_q = f"{q} {context_terms}"
+                    enhanced_query = enhance_query_for_retrieval(enhanced_q, content_type_hints_preview)
+                    print(f"   🔍 Enhanced follow-up query with conversation context")
+                else:
+                    enhanced_query = enhance_query_for_retrieval(q, content_type_hints_preview)
             
                 # Retrieve documents with enhanced query (fetch more for reranking)
                 # Fetch more documents initially, then rerank to get the best ones
@@ -341,12 +672,25 @@ def create_handler_class(
                     # No reranking, use normal retrieval
                     docs = retriever.get_relevant_documents(enhanced_query)
                 
+                # Filter documents if user referenced a specific document
+                if referenced_doc:
+                    docs = filter_documents_by_source(docs, referenced_doc)
+                    # If filtering removed all docs, try again with more docs
+                    if not docs:
+                        print(f"   ⚠️  No chunks found for referenced document, trying broader search")
+                        try:
+                            temp_retriever = vectorstore.as_retriever(search_kwargs={"k": 50})
+                            docs = temp_retriever.get_relevant_documents(enhanced_query)
+                            docs = filter_documents_by_source(docs, referenced_doc)
+                        except:
+                            pass
+                
                 if not docs:
                     # No context found - return early
                     payload = {
                         "answer": "I don't know based on the provided information. No relevant documents were found in the knowledge base.",
-                        "sources": ["No sources found for this query."],
-                        "markdown": "### Answer:\nI don't know based on the provided information. No relevant documents were found in the knowledge base.\n\n### Sources:\n1. No sources found for this query.",
+                        "sources": [],
+                        "markdown": "### Answer:\nI don't know based on the provided information. No relevant documents were found in the knowledge base.",
                         "needs_url": True
                     }
                     blob = json.dumps(payload).encode("utf-8")
@@ -466,7 +810,7 @@ def create_handler_class(
                 # Reason: Integrated NotebookLM-style prompts as default for better answer quality
                 # - Uses NotebookLM-style prompts for comprehensive, insightful answers
                 # - Falls back to format-specific prompts when format is explicitly requested
-                # - Provides interest-driven insights and source attribution
+                # - Provides interest-driven insights and context-aware responses
                 # Estimate answer length based on question complexity
                 estimated_length = estimate_answer_length(q, wants_explicit_detail, wants_brief, detected_format)
                 min_words, max_words, desc = estimated_length
@@ -513,6 +857,13 @@ def create_handler_class(
     - **Fresh Perspectives**: Approach the same topic from different angles if you need to revisit it
 
     Answer the question using ONLY the information from the Context below. If the context is insufficient or the question is unrelated to PayPlus 360, reply exactly: "I don't know based on the provided information."
+
+    # Critical: Information Source Restriction
+    - **DO NOT add, invent, or infer any information that is not explicitly present in the provided context or text**
+    - **DO NOT use general knowledge, external facts, or assumptions beyond what is in the context**
+    - **ONLY use information, facts, details, examples, and data that are directly stated or clearly implied in the provided context**
+    - If information is not in the context, do not include it - even if you know it from other sources
+    - When the context lacks information, acknowledge this rather than supplementing with external knowledge
 
     🚨🚨🚨 CRITICAL: The user explicitly requested DETAILED/EXPANDED information. Your response MUST be at least 500 words. This is NOT optional - it is a MANDATORY REQUIREMENT.
 
@@ -565,6 +916,12 @@ def create_handler_class(
 
     Answer the question using ONLY the information from the Context below. If the context is insufficient or the question is unrelated to PayPlus 360, reply exactly: "I don't know based on the provided information."
 
+    # Critical: Information Source Restriction
+    - **DO NOT add, invent, or infer any information that is not explicitly present in the provided context or text**
+    - **DO NOT use general knowledge, external facts, or assumptions beyond what is in the context**
+    - **ONLY use information, facts, details, examples, and data that are directly stated or clearly implied in the provided context**
+    - If information is not in the context, do not include it - even if you know it from other sources
+
     Provide a brief, concise answer (20-50 words or 2-3 sentences maximum). Avoid repetition. If something is mentioned once, do not repeat it.
 
     Context:
@@ -592,18 +949,7 @@ def create_handler_class(
                 # Create dynamic RAG chain with selected LLM
                 try:
                     # Get LLM with potentially adjusted temperature
-                    if provider.lower() == "openai":
-                        from langchain_openai import ChatOpenAI
-                        # Force longer responses for explicit detail mode (500+ words)
-                        max_tokens = 2000 if (wants_explicit_detail and not wants_brief) else (1500 if (wants_detail and not wants_brief) else 1000)
-                        selected_llm = ChatOpenAI(
-                            model=model or OPENAI_MODEL,
-                            temperature=adjusted_temp,
-                            api_key=OPENAI_API_KEY,
-                            max_tokens=max_tokens
-                        )
-                        print(f"   📊 OpenAI max_tokens: {max_tokens}")
-                    elif provider.lower() == "gemini":
+                    if provider.lower() == "gemini":
                         # For Gemini, we need to recreate with adjusted temp
                         import google.generativeai as genai
                         from langchain_core.language_models.chat_models import BaseChatModel
@@ -700,11 +1046,32 @@ def create_handler_class(
                     self.wfile.write(blob)
                     return
             
-                # Create RAG chain with enhanced context formatting
+                # Create RAG chain with enhanced context formatting including conversation history
                 # Use preretrieved and reranked documents instead of calling retriever again
-                # Create a lambda function that returns the already-retrieved documents
+                # Create a lambda function that returns the already-retrieved documents with conversation history
                 def get_preretrieved_docs(_):
-                    return format_docs(docs)
+                    formatted_context = format_docs(docs)
+                    
+                    # Add document reference instruction if user specified a document
+                    doc_ref_note = ""
+                    if referenced_doc:
+                        doc_ref_note = f"\n# IMPORTANT: Document Reference\n"
+                        doc_ref_note += f"The user specifically asked about the document/source: **{referenced_doc}**\n"
+                        doc_ref_note += f"Focus your answer primarily on information from this specific document.\n"
+                        doc_ref_note += f"The context below contains chunks from this document (and possibly related documents).\n"
+                        doc_ref_note += f"Prioritize information from the referenced document when answering.\n\n"
+                    
+                    # Add conversation history to context if available
+                    if conversation_history:
+                        history_text = format_conversation_history(conversation_history, is_follow_up=is_follow_up)
+                        # For follow-up questions, prioritize conversation history over documents
+                        if is_follow_up:
+                            return history_text + doc_ref_note + "\n\n# Additional Document Context\n" + formatted_context
+                        else:
+                            return history_text + doc_ref_note + formatted_context
+                    
+                    # No conversation history, but may have document reference
+                    return doc_ref_note + formatted_context
             
                 # Use preretrieved documents (already reranked) instead of retriever
                 rag_chain = ({"context": get_preretrieved_docs, "question": RunnablePassthrough()} | enhanced_prompt | selected_llm)
@@ -791,19 +1158,19 @@ def create_handler_class(
                             print(f"   ⚠️  Expansion failed: {str(e)}, using original answer")
                     else:
                         print(f"   ✅ Answer length is good ({answer_word_count} words)")
+                
+                # Store question-answer pair in session memory (after any expansion)
+                add_to_session(session_id, q, answer)
             
+                # Collect sources (documents and links)
                 sources = []
                 if docs:
-                    for d in docs[:5]:  # Show up to 5 sources for better context
+                    for d in docs[:10]:  # Collect sources from up to 10 documents
                         src = d.metadata.get("source") or "Unknown"
-                        title = d.metadata.get("title") or ""
-                        label = f"{title} - {src}".strip(" -")
-                        if label not in sources:  # Avoid duplicates
-                            sources.append(label)
-            
-                if not sources:
-                    sources.append("No sources found for this query.")
-            
+                        # Clean up the source - extract URL or document name
+                        if src and src != "Unknown" and src not in sources:
+                            sources.append(src)
+                
                 # Check if answer indicates insufficient information
                 answer_lower = answer.lower()
                 needs_url = (
@@ -815,15 +1182,25 @@ def create_handler_class(
                     (len(answer) < 50 and "don't know" in answer_lower)
                 )
             
-                md_lines = ["### Answer:", answer, "", "### Sources:"]
-                for i, s in enumerate(sources, 1):
-                    md_lines.append(f"{i}. {s}")
+                md_lines = ["### Answer:", answer]
+                
+                # Add Sources section if we have sources
+                if sources:
+                    md_lines.append("")
+                    md_lines.append("### Sources")
+                    for i, s in enumerate(sources, 1):
+                        # Make URLs clickable
+                        if s.startswith(("http://", "https://")):
+                            md_lines.append(f"{i}. [{s}]({s})")
+                        else:
+                            md_lines.append(f"{i}. {s}")
             
                 payload = {
                     "answer": answer,
                     "sources": sources,
                     "markdown": "\n".join(md_lines),
-                    "needs_url": needs_url
+                    "needs_url": needs_url,
+                    "session_id": session_id
                 }
                 blob = json.dumps(payload).encode("utf-8")
             

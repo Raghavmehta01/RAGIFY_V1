@@ -39,13 +39,13 @@ button { appearance: none; border: 1px solid var(--border); border-radius: 10px;
   max-height: 80vh;
   overflow-y: auto;
   font-size: 15px;
-  line-height: 1.4;
+  line-height: 1.2;
   word-wrap: break-word;
 }
 
 #result p {
-  margin: 0 0 8px 0;
-  line-height: 1.4;
+  margin: 0 0 4px 0;
+  line-height: 1.2;
 }
 
 #result p:last-child {
@@ -53,8 +53,8 @@ button { appearance: none; border: 1px solid var(--border); border-radius: 10px;
 }
 
 #result h1, #result h2, #result h3 {
-  margin: 12px 0 8px 0;
-  line-height: 1.3;
+  margin: 8px 0 4px 0;
+  line-height: 1.2;
 }
 
 #result h1:first-child, #result h2:first-child, #result h3:first-child {
@@ -62,18 +62,18 @@ button { appearance: none; border: 1px solid var(--border); border-radius: 10px;
 }
 
 #result ul, #result ol {
-  margin: 8px 0;
+  margin: 4px 0;
   padding-left: 24px;
-  line-height: 1.4;
+  line-height: 1.2;
 }
 
 #result li {
-  margin: 4px 0;
-  line-height: 1.4;
+  margin: 2px 0;
+  line-height: 1.2;
 }
 
 #result br {
-  line-height: 1.4;
+  line-height: 1.2;
 }
 
 #result code {
@@ -81,22 +81,61 @@ button { appearance: none; border: 1px solid var(--border); border-radius: 10px;
   background: var(--chip);
   border-radius: 4px;
   font-size: 0.9em;
-  line-height: 1.4;
+  line-height: 1.2;
 }
 
 #result pre {
-  margin: 8px 0;
+  margin: 4px 0;
   padding: 12px;
   background: var(--chip);
   border-radius: 8px;
   overflow-x: auto;
-  line-height: 1.4;
+  line-height: 1.2;
 }
 
 #result pre code {
   padding: 0;
   background: transparent;
 }
+
+#result table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 8px 0;
+  font-size: 14px;
+  line-height: 1.3;
+}
+
+#result table thead {
+  background: var(--chip);
+}
+
+#result table th {
+  padding: 10px 12px;
+  text-align: left;
+  font-weight: 600;
+  border: 1px solid var(--border);
+  color: var(--text);
+}
+
+#result table td {
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  color: var(--text);
+}
+
+#result table tbody tr {
+  background: var(--panel);
+}
+
+#result table tbody tr:nth-child(even) {
+  background: rgba(34, 39, 57, 0.5);
+}
+
+#result table tbody tr:hover {
+  background: rgba(101, 86, 255, 0.1);
+}
+
 .success { color: var(--success); }
 .error { color: var(--error); }
 .sr-only { position: absolute; left: -10000px; width: 1px; height: 1px; overflow: hidden; }
