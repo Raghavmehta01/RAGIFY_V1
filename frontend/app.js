@@ -17,6 +17,25 @@ const fileInput = document.getElementById("file-input");
 const uploadFileBtn = document.getElementById("upload-file-btn");
 const fileStatus = document.getElementById("file-status");
 
+// Session memory: Get or create session ID
+function getSessionId() {
+  let sessionId = localStorage.getItem('ragify_session_id');
+  if (!sessionId) {
+    sessionId = 'new'; // Will be created by server
+  }
+  return sessionId;
+}
+
+function setSessionId(sessionId) {
+  if (sessionId) {
+    localStorage.setItem('ragify_session_id', sessionId);
+  }
+}
+
+function clearSession() {
+  localStorage.removeItem('ragify_session_id');
+}
+
 function renderMarkdown(text) {
   if (!text) return '';
   
@@ -36,10 +55,50 @@ function renderMarkdown(text) {
   const lines = html.split('\n');
   const processedLines = [];
   let inList = false;
-  let listItems = [];
+  let inTable = false;
+  let tableRows = [];
+  let tableHeaders = null;
   
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i].trim();
+    const originalLine = lines[i];
+    
+    // Check if this is a table row (starts and ends with |)
+    const isTableRow = /^\|.+\|$/.test(line);
+    const isTableSeparator = /^\|[\s\-\|:]+\|$/.test(line);
+    
+    if (isTableRow && !isTableSeparator) {
+      // This is a table row
+      if (!inTable) {
+        // Close any open list
+        if (inList) {
+          processedLines.push('</ul>');
+          inList = false;
+        }
+        inTable = true;
+        tableRows = [];
+      }
+      
+      // Parse cells (split by | and trim)
+      const cells = line.split('|').map(cell => cell.trim()).filter(cell => cell !== '');
+      tableRows.push(cells);
+      continue;
+    } else if (isTableSeparator) {
+      // This is the separator row - extract headers from previous row
+      if (tableRows.length > 0) {
+        tableHeaders = tableRows[tableRows.length - 1];
+        tableRows = tableRows.slice(0, -1); // Remove header row from data rows
+      }
+      continue;
+    } else {
+      // Not a table row - close table if we were in one
+      if (inTable) {
+        processedLines.push(renderTable(tableHeaders, tableRows));
+        inTable = false;
+        tableRows = [];
+        tableHeaders = null;
+      }
+    }
     
     // Headers
     if (line.startsWith('### ')) {
@@ -94,12 +153,45 @@ function renderMarkdown(text) {
     processedLines.push('<p>' + processInlineMarkdown(line) + '</p>');
   }
   
+  // Close any open table
+  if (inTable) {
+    processedLines.push(renderTable(tableHeaders, tableRows));
+  }
+  
   // Close any open list
   if (inList) {
     processedLines.push('</ul>');
   }
   
   return processedLines.join('\n');
+}
+
+function renderTable(headers, rows) {
+  if (!rows || rows.length === 0) return '';
+  
+  let html = '<table>';
+  
+  // Add header row if we have headers
+  if (headers && headers.length > 0) {
+    html += '<thead><tr>';
+    for (const header of headers) {
+      html += '<th>' + processInlineMarkdown(header) + '</th>';
+    }
+    html += '</tr></thead>';
+  }
+  
+  // Add body rows
+  html += '<tbody>';
+  for (const row of rows) {
+    html += '<tr>';
+    for (const cell of row) {
+      html += '<td>' + processInlineMarkdown(cell) + '</td>';
+    }
+    html += '</tr>';
+  }
+  html += '</tbody></table>';
+  
+  return html;
 }
 
 function escapeHtml(text) {
@@ -147,10 +239,11 @@ async function ask(q, provider) {
   urlStatus.textContent = "";
   
   try {
+    const sessionId = getSessionId();
     const resp = await fetch(API, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ question: q, provider: provider })
+      body: JSON.stringify({ question: q, provider: provider, session_id: sessionId })
     });
     if (!resp.ok) {
       const t = await resp.text();
@@ -158,6 +251,11 @@ async function ask(q, provider) {
     }
     const data = await resp.json();
     result.innerHTML = renderMarkdown(data.markdown);
+    
+    // Store session ID from response
+    if (data.session_id) {
+      setSessionId(data.session_id);
+    }
     
     // Show URL input if answer indicates insufficient information
     if (data.needs_url) {
@@ -292,6 +390,7 @@ clearBtn.addEventListener("click", () => {
   result.textContent = "";
   urlSection.style.display = "none";
   urlStatus.textContent = "";
+  clearSession(); // Clear session memory
   textarea.focus();
 });
 
