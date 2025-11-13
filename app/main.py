@@ -818,6 +818,53 @@ Answer the question using ONLY the information from the Context below. If the co
 - **ONLY use information, facts, details, examples, and data that are directly stated or clearly implied in the provided context**
 - When the context lacks information, acknowledge this rather than supplementing with external knowledge
 
+# Chain of Thought Reasoning
+Before providing your final answer, you MUST show your reasoning process step-by-step. This helps ensure accuracy and transparency.
+
+**Reasoning Process:**
+1. **Understand the Question**: Break down what the question is asking for
+   - Identify key concepts, entities, or topics mentioned
+   - Determine what type of information is needed (factual, analytical, comparative, etc.)
+   - Note any specific requirements or constraints
+
+2. **Analyze the Context**: Examine the provided context systematically
+   - Identify which parts of the context are relevant to the question
+   - Extract key information, facts, and details related to the question
+   - Note any connections or relationships between different pieces of information
+   - Identify any gaps or missing information in the context
+
+3. **Synthesize Information**: Combine relevant information from the context
+   - Connect related pieces of information from different parts of the context
+   - Identify patterns, themes, or relationships
+   - Determine what information directly answers the question
+   - Note any contradictions or ambiguities in the context
+
+4. **Formulate the Answer**: Structure your response based on your analysis
+   - Organize the information logically
+   - Determine the appropriate level of detail needed
+   - Ensure all aspects of the question are addressed
+   - Verify that your answer is grounded in the context
+
+5. **Verify Accuracy**: Check your answer before finalizing
+   - Ensure all information comes from the provided context
+   - Verify that you haven't added, invented, or inferred information
+   - Confirm that the answer addresses all parts of the question
+   - Check for any repetition or redundancy
+
+**Output Format:**
+Start your response with a "## Reasoning Process" section that shows your step-by-step thinking, then provide your final answer. The reasoning should be concise but clear, showing how you arrived at your conclusion.
+
+Example structure:
+## Reasoning Process
+1. **Understanding the Question**: [What the question is asking]
+2. **Analyzing the Context**: [Relevant information found]
+3. **Synthesizing Information**: [How information connects]
+4. **Formulating the Answer**: [How you'll structure the response]
+5. **Verifying Accuracy**: [Confirmation that answer is grounded in context]
+
+## Answer
+[Your final answer here]
+
 """
     
     # Format-specific instructions
@@ -1137,6 +1184,42 @@ Answer the question using ONLY the information from the Context below. If the co
 - If information is not in the context, do not include it - even if you know it from other sources
 - When the context lacks information, acknowledge this rather than supplementing with external knowledge
 
+# Chain of Thought Reasoning
+Before providing your final answer, you MUST show your reasoning process step-by-step. This helps ensure accuracy and transparency.
+
+**Reasoning Process:**
+1. **Understand the Question**: Break down what the question is asking for
+   - Identify key concepts, entities, or topics mentioned
+   - Determine what type of information is needed (factual, analytical, comparative, etc.)
+   - Note any specific requirements or constraints
+
+2. **Analyze the Context**: Examine the provided context systematically
+   - Identify which parts of the context are relevant to the question
+   - Extract key information, facts, and details related to the question
+   - Note any connections or relationships between different pieces of information
+   - Identify any gaps or missing information in the context
+
+3. **Synthesize Information**: Combine relevant information from the context
+   - Connect related pieces of information from different parts of the context
+   - Identify patterns, themes, or relationships
+   - Determine what information directly answers the question
+   - Note any contradictions or ambiguities in the context
+
+4. **Formulate the Answer**: Structure your response based on your analysis
+   - Organize the information logically
+   - Determine the appropriate level of detail needed
+   - Ensure all aspects of the question are addressed
+   - Verify that your answer is grounded in the context
+
+5. **Verify Accuracy**: Check your answer before finalizing
+   - Ensure all information comes from the provided context
+   - Verify that you haven't added, invented, or inferred information
+   - Confirm that the answer addresses all parts of the question
+   - Check for any repetition or redundancy
+
+**Output Format:**
+Start your response with a "## Reasoning Process" section that shows your step-by-step thinking, then provide your final answer. The reasoning should be concise but clear, showing how you arrived at your conclusion.
+
 Your goal is to provide a complete, well-structured answer that fully addresses the question using all relevant information from the context. Structure your response with clear paragraphs that explain concepts thoroughly and include all relevant details, examples, and nuances from the provided context, especially as they relate to PayPlus 360 and its restructuring. Avoid repeating the same information - make each sentence add unique value.
 
 Context:
@@ -1289,6 +1372,43 @@ def build_notebooklm_style_prompt(style="default", content_type_hints=None, want
 5. **Context-Aware**: Adapt your explanation depth based on the question's complexity and apparent user expertise level. Remember you're helping ODT team members understand their own project.
 6. **Non-Repetitive**: Avoid repeating the same information, phrases, or examples. Each sentence should add unique value and new information or perspective.
 7. **Adaptive Length**: Adjust answer length based on question complexity - simple questions need concise answers, complex questions need detailed explanations.
+8. **Chain of Thought**: Show your reasoning process step-by-step before providing the final answer to ensure accuracy and transparency.
+
+# Chain of Thought Reasoning
+Before providing your final answer, you MUST demonstrate your reasoning process step-by-step. This helps ensure accuracy, transparency, and helps users understand how you arrived at your conclusions.
+
+**Reasoning Process:**
+1. **Understand the Question**: Break down what the question is asking for
+   - Identify key concepts, entities, or topics mentioned
+   - Determine what type of information is needed (factual, analytical, comparative, etc.)
+   - Note any specific requirements or constraints
+
+2. **Analyze the Context**: Examine the provided context systematically
+   - Identify which parts of the context are relevant to the question
+   - Extract key information, facts, and details related to the question
+   - Note any connections or relationships between different pieces of information
+   - Identify any gaps or missing information in the context
+
+3. **Synthesize Information**: Combine relevant information from the context
+   - Connect related pieces of information from different parts of the context
+   - Identify patterns, themes, or relationships
+   - Determine what information directly answers the question
+   - Note any contradictions or ambiguities in the context
+
+4. **Formulate the Answer**: Structure your response based on your analysis
+   - Organize the information logically
+   - Determine the appropriate level of detail needed
+   - Ensure all aspects of the question are addressed
+   - Verify that your answer is grounded in the context
+
+5. **Verify Accuracy**: Check your answer before finalizing
+   - Ensure all information comes from the provided context
+   - Verify that you haven't added, invented, or inferred information
+   - Confirm that the answer addresses all parts of the question
+   - Check for any repetition or redundancy
+
+**Output Format:**
+Start your response with a "## Reasoning Process" section that shows your step-by-step thinking, then provide your final answer following the NotebookLM-style structure. The reasoning should be concise but clear, showing how you arrived at your conclusion.
 
 # Anti-Repetition Guidelines
 - **Unique Content**: Every sentence should contribute new information or a new perspective
@@ -1395,6 +1515,14 @@ def build_notebooklm_style_prompt(style="default", content_type_hints=None, want
     
     answer_structure = """# Answer Structure
 Your answer should follow this structure:
+
+## Reasoning Process
+[Show your step-by-step reasoning process:]
+1. **Understanding the Question**: [What the question is asking]
+2. **Analyzing the Context**: [Relevant information found in the context]
+3. **Synthesizing Information**: [How information connects and relates]
+4. **Formulating the Answer**: [How you'll structure the response]
+5. **Verifying Accuracy**: [Confirmation that answer is grounded in context]
 
 ## Direct Answer
 [Provide a clear, direct response to the question in 2-3 sentences]
